@@ -70,7 +70,7 @@ additional_definitions = [
 
 required = ['output_dir', 'conv', 'dropout', 'epochs', 'pool', 'dense', 'activation', 'loss',
             'optimizer', 'verbose', 'batch_size', 'early_stop', 'train_data', 'val_data',
-            'data_url', 'candle_data_dir']
+            'data_url']
 
 
 class igtd(candle.Benchmark):
@@ -100,7 +100,7 @@ def run(params):
 # infer using model
 # etc
 
-    os.environ['CANDLE_DATA_DIR'] = params['candle_data_dir']
+#    os.environ['CANDLE_DATA_DIR'] = params['candle_data_dir']
     params['verbose'] = 2
 
     candle.get_file(fname=params['train_data'],
@@ -108,7 +108,7 @@ def run(params):
                 unpack=False, md5_hash=None,
                 datadir=None,
                 cache_subdir='')
-    pkl_file = open(os.path.join(params['candle_data_dir'], params['train_data']), 'rb')
+    pkl_file = open(os.path.join(os.environ['CANDLE_DATA_DIR'], params['train_data']), 'rb')
     temp_data = cp.load(pkl_file)
     pkl_file.close()
     trainData = temp_data['data']
@@ -121,7 +121,7 @@ def run(params):
                         unpack=False, md5_hash=None,
                         datadir=None,
                         cache_subdir='')
-        pkl_file = open(os.path.join(params['candle_data_dir'], params['val_data']), 'rb')
+        pkl_file = open(os.path.join(os.environ['CANDLE_DATA_DIR'], params['val_data']), 'rb')
         temp_data = cp.load(pkl_file)
         pkl_file.close()
         valData = temp_data['data']
