@@ -7,7 +7,7 @@
 #DIR_PATH=$(dirname $path)
 #Train_Script="$DIR_PATH/Train.py"
 
-Train_Script="./Train.py"
+Train_Script="/IGTD/Train.py"
 if [[ "$#" < 2  ]] ; then
 	    echo "Illegal number of parameters"
 	    echo "CUDA_VISIBLE_DEVICES CANDLE_DATA_DIR are required"
