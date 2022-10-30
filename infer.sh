@@ -1,8 +1,10 @@
 #!/bin/bash
 
-path=$(realpath "${BASH_SOURCE:-$0}")
-DIR_PATH=$(dirname $path)
-Infer_Script="$DIR_PATH/Infer.py"
+#path=$(realpath "${BASH_SOURCE:-$0}")
+#DIR_PATH=$(dirname $path)
+#Infer_Script="$DIR_PATH/Infer.py"
+
+Infer_Script="./Infer.py"
 if [[ "$#" < 1  ]] ; then
 	    echo "Illegal number of parameters"
 	    echo "CANDLE_DATA_DIR is required"
