@@ -7,8 +7,8 @@
 #DIR_PATH=$(dirname $path)
 #Train_Script="$DIR_PATH/Train.py"
 
-#export LD_LIBRARY_PATH="/usr/local/cuda-10.0/compat/:$LD_LIBRARY_PATH"
-#echo $LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="/usr/local/cuda-10.0/compat/:$LD_LIBRARY_PATH"
+echo $LD_LIBRARY_PATH
 
 Train_Script="/IGTD/Train.py"
 if [[ "$#" < 2  ]] ; then
