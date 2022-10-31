@@ -10,7 +10,7 @@ from keras.models import load_model
 from tensorflow.keras import backend as K
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-# print('CUDA_VISIBLE_DEVICES in python is ' + str(os.environ['CUDA_VISIBLE_DEVICES']))
+print('CUDA_VISIBLE_DEVICES in python is ' + os.environ['CUDA_VISIBLE_DEVICES'])
 
 
 # This should be set outside as a user environment variable
