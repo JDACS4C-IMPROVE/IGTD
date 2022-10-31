@@ -4,8 +4,8 @@
 #DIR_PATH=$(dirname $path)
 #Infer_Script="$DIR_PATH/Infer.py"
 
-export LD_LIBRARY_PATH="/usr/local/cuda-10.0/compat/:$LD_LIBRARY_PATH"
-echo $LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH="/usr/local/cuda-10.0/compat/:$LD_LIBRARY_PATH"
+#echo $LD_LIBRARY_PATH
 
 Infer_Script="/IGTD/Infer.py"
 if [[ "$#" < 1  ]] ; then
