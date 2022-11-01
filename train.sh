@@ -10,8 +10,8 @@
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda-10.0/compat/"
 #echo $LD_LIBRARY_PATH
 
-Train_Script="/IGTD/Train.py"
-if [[ "$#" < 2  ]] ; then
+Train_Script="/usr/local/IGTD/Train.py"
+if [[ "$#" < 3  ]] ; then
 	    echo "Illegal number of parameters"
 	    echo "CUDA_VISIBLE_DEVICES CANDLE_DATA_DIR are required"
 	    exit -1
@@ -19,7 +19,8 @@ fi
 
 CUDA_VISIBLE_DEVICES=$1; shift
 CANDLE_DATA_DIR=$1; shift
-CMD="python3 ${Train_Script} $@"
+CANDLE_CONFIG=$1 ; shift
+CMD="python3 ${Train_Script} --config_file $CANDLE_CONFIG"
 
 
 
