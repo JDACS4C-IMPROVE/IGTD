@@ -20,6 +20,8 @@ fi
 CUDA_VISIBLE_DEVICES=$1; shift
 CANDLE_DATA_DIR=$1; shift
 CANDLE_CONFIG=$1 ; shift
+
+export CANDLE_DATA_DIR=$CANDLE_DATA_DIR
 CMD="python3 ${Train_Script} --config_file $CANDLE_CONFIG"
 
 
