@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # arg 1 CANDLE_DATA_DIR
-# arg 2 CANDLE_CONFIG
 
 #path=$(realpath "${BASH_SOURCE:-$0}")
 #DIR_PATH=$(dirname $path)
@@ -11,16 +10,16 @@
 #echo $LD_LIBRARY_PATH
 
 Infer_Script="/usr/local/IGTD/Infer.py"
-if [[ "$#" < 2  ]] ; then
+if [[ "$#" < 1  ]] ; then
 	    echo "Illegal number of parameters"
-	    echo "CANDLE_DATA_DIR CANDLE_CONFIG are required"
+	    echo "CANDLE_DATA_DIR is required"
 	    exit -1
 fi
 
 CANDLE_DATA_DIR=$1; shift
-CANDLE_CONFIG=$1; shift
+#CANDLE_CONFIG=$1; shift
 
-export CANDLE_DATA_DIR=$CANDLE_DATA_DIR
+#export CANDLE_DATA_DIR=$CANDLE_DATA_DIR
 CMD="python3 ${Infer_Script} $@"
 
 
