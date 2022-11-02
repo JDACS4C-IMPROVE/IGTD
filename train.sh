@@ -7,7 +7,7 @@
 #DIR_PATH=$(dirname $path)
 #Train_Script="$DIR_PATH/Train.py"
 
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda-10.0/compat/"
+#export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda-10.0/compat/"
 #echo $LD_LIBRARY_PATH
 
 Train_Script="/usr/local/IGTD/Train.py"
