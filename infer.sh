@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# arg 1 CANDLE_DATA_DIR
+# arg 1 CUDA_VISIBLE_DEVICES
+# arg 2 CANDLE_DATA_DIR
 
 #path=$(realpath "${BASH_SOURCE:-$0}")
 #DIR_PATH=$(dirname $path)
@@ -10,12 +11,13 @@
 #echo $LD_LIBRARY_PATH
 
 Infer_Script="/usr/local/IGTD/Infer.py"
-if [[ "$#" < 1  ]] ; then
+if [[ "$#" < 2  ]] ; then
 	    echo "Illegal number of parameters"
-	    echo "CANDLE_DATA_DIR is required"
+	    echo "CUDA_VISIBLE_DEVICES CANDLE_DATA_DIR are required"
 	    exit -1
 fi
 
+CUDA_VISIBLE_DEVICES=$1; shift
 CANDLE_DATA_DIR=$1; shift
 #CANDLE_CONFIG=$1; shift
 
@@ -25,8 +27,9 @@ CMD="python3 ${Infer_Script} $@"
 
 
 echo "using container "
+echo "using CUDA_VISIBLE_DEVICES ${CUDA_VISIBLE_DEVICES}"
 echo "using CANDLE_DATA_DIR ${CANDLE_DATA_DIR}"
 # echo "using CANDLE_CONFIG ${CANDLE_CONFIG}"
 echo "running command ${CMD}"
 
-CANDLE_DATA_DIR=${CANDLE_DATA_DIR} $CMD
+CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} CANDLE_DATA_DIR=${CANDLE_DATA_DIR} $CMD
