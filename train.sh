@@ -12,7 +12,7 @@
 #echo $LD_LIBRARY_PATH
 
 Train_Script="/usr/local/IGTD/Train.py"
-if [[ "$#" < 3  ]] ; then
+if [[ "$#" < 2  ]] ; then
 	    echo "Illegal number of parameters"
 	    echo "CUDA_VISIBLE_DEVICES CANDLE_DATA_DIR CANDLE_CONFIG are required"
 	    exit -1
