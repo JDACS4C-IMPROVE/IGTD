@@ -57,11 +57,13 @@ for s in study[1:]:
 
 
 # Generate mappings to unique IDs for cancer case IDs and drug IDs
-ge_map, ge_unique_data = generate_unique_id_mapping(ge.iloc[:, :1000])
+# ge_map, ge_unique_data = generate_unique_id_mapping(ge.iloc[:, :1000]) # For generating example data
+ge_map, ge_unique_data = generate_unique_id_mapping(ge)
 ge_map.columns = ['CancID', 'Unique_CancID']
 ge_map.to_csv(os.path.join(output_data_dir, 'CancID_Mapping.txt'), header=True, index=False, sep='\t', line_terminator='\r\n')
 ge_unique_data.to_csv(os.path.join(output_data_dir, 'Unique_CancID_Data.txt'), header=True, index=True, sep='\t', line_terminator='\r\n')
-md_map, md_unique_data = generate_unique_id_mapping(md.iloc[:, :1000])
+# md_map, md_unique_data = generate_unique_id_mapping(md.iloc[:, :1000]) # For generating example data
+md_map, md_unique_data = generate_unique_id_mapping(md)
 md_map.columns = ['DrugID', 'Unique_DrugID']
 md_map.to_csv(os.path.join(output_data_dir, 'DrugID_Mapping.txt'), header=True, index=False, sep='\t', line_terminator='\r\n')
 md_unique_data.to_csv(os.path.join(output_data_dir, 'Unique_DrugID_Data.txt'), header=True, index=True, sep='\t', line_terminator='\r\n')
@@ -69,10 +71,10 @@ md_unique_data.to_csv(os.path.join(output_data_dir, 'Unique_DrugID_Data.txt'), h
 
 
 # Generate image data of gene expressions with unique IDs
-num_row = 20    # Number of pixel rows in image representation
-num_col = 20    # Number of pixel columns in image representation
-# num_row = 50    # Number of pixel rows in image representation
-# num_col = 50    # Number of pixel columns in image representation
+# num_row = 20    # Number of pixel rows in image representation # For generating example data
+# num_col = 20    # Number of pixel columns in image representation # For generating example data
+num_row = 50    # Number of pixel rows in image representation
+num_col = 50    # Number of pixel columns in image representation
 num = num_row * num_col # Number of features to be included for analysis, which is also the total number of pixels in image representation
 save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
 max_step = 30000    # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
@@ -101,10 +103,10 @@ table_to_image(norm_data, [num_row, num_col], fea_dist_method, image_dist_method
 
 
 # Generate image data of drug descriptors with unique IDs
-num_row = 20    # Number of pixel rows in image representation
-num_col = 20    # Number of pixel columns in image representation
-# num_row = 37    # Number of pixel rows in image representation
-# num_col = 37    # Number of pixel columns in image representation
+# num_row = 20    # Number of pixel rows in image representation # For generating example data
+# num_col = 20    # Number of pixel columns in image representation # For generating example data
+num_row = 37    # Number of pixel rows in image representation
+num_col = 37    # Number of pixel columns in image representation
 num = num_row * num_col # Number of features to be included for analysis, which is also the total number of pixels in image representation
 save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
 max_step = 30000    # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
