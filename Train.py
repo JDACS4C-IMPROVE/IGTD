@@ -9,8 +9,6 @@ from keras import backend
 from keras.models import load_model
 from tensorflow.keras import backend as K
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-print('CUDA_VISIBLE_DEVICES in python is ' + os.environ['CUDA_VISIBLE_DEVICES'])
 
 
 # This should be set outside as a user environment variable
@@ -65,6 +63,10 @@ additional_definitions = [
     {'name': 'cnn_activation',
      'type': str,
      'help': 'Activation function for convolution layers'
+     },
+    {'name': 'train_task',
+     'type': str,
+     'help': 'Name of training task'
      }
 ]
 
@@ -100,7 +102,6 @@ def run(params):
 # infer using model
 # etc
 
-#    os.environ['CANDLE_DATA_DIR'] = params['candle_data_dir']
     params['verbose'] = 2
 
     candle.get_file(fname=params['train_data'],
@@ -193,7 +194,7 @@ def run(params):
                                         params['drug_col_name']: [i.split('|')[1] for i in trainSample],
                                         params['res_col_name']: trainLabel,
                                         'Prediction': trainPredResult}, index=trainSample)
-    predResult['train'].to_csv(params['output_dir'] + '/' + 'Train_Prediction_Result.txt', header=True,
+    predResult['train'].to_csv(params['output_dir'] + '/Prediction_Result_Train_' + params['train_task'] + '.txt', header=True,
                                index=False, sep='\t', line_terminator='\r\n')
 
     if valData is not None:
@@ -205,7 +206,7 @@ def run(params):
                                           params['drug_col_name']: [i.split('|')[1] for i in valSample],
                                           params['res_col_name']: valLabel,
                                           'Prediction': valPredResult}, index=valSample)
-        predResult['val'].to_csv(params['output_dir'] + '/' + 'Val_Prediction_Result.txt', header=True,
+        predResult['val'].to_csv(params['output_dir'] + '/Prediction_Result_Val_' + params['train_task'] + '.txt', header=True,
                                  index=False, sep='\t', line_terminator='\r\n')
 
     backend.clear_session()
@@ -224,6 +225,3 @@ if __name__ == "__main__":
     main()
     if K.backend() == "tensorflow":
         K.clear_session()
-
-
-

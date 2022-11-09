@@ -47,7 +47,7 @@ def get_full_data(res, ccl, drug, cancer_col_name, drug_col_name, res_col_name=N
 
 def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
               drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
-              cancer_col_name, drug_col_name, res_col_name, response_data_filepath, test_data=None):
+              cancer_col_name, drug_col_name, res_col_name, response_data_filepath):
     '''
     This function generates data of matched cancer, drug, and response.
 
@@ -62,10 +62,7 @@ def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image
     cancer_col_name: string, column name of cancer IDs in data frame
     drug_col_name: string, column name of drug IDs in data frame
     res_col_name: string, column name of response in data frame
-    response_data_filepath: string, if test_data is None; otherwise, list of string. File path(s) to the response data.
-    test_data: list of string or None. To generate matched data of testing sets, give each testing set a name string,
-        and correspodingly response_data_filepath should be a list of string pointing to the response data of
-        all testing sets.
+    response_data_filepath: string, file path to the response data.
 
     Returns:
     --------
@@ -116,27 +113,13 @@ def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image
     data['md']['data'] = np.empty((len(id), drug_data.shape[1], drug_data.shape[2], 1))
     data['md']['data'][:, :, :, 0] = drug_data[id, :, :]
 
-    if test_data is not None:
-        matched_data = {}
-        matched_data['data'] = {}
-        matched_data['label'] = {}
-        matched_data['sample'] = {}
-        for i in range(len(test_data)):
-            # Load drug response data
-            data['res'] = pd.read_csv(response_data_filepath[i], sep='\t', engine='c', na_values=['na', '-', ''],
-                                      header=0, index_col=None)
-            data['res'] = data['res'].loc[:, [cancer_col_name, drug_col_name, res_col_name]]
-            temp_matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
-            matched_data['data'][test_data[i]] = temp_matched_data['data']
-            matched_data['label'][test_data[i]] = temp_matched_data['label']
-            matched_data['sample'][test_data[i]] = temp_matched_data['sample']
+    # Load response data
+    data['res'] = pd.read_csv(response_data_filepath, sep=',', engine='c', na_values=['na', '-', ''],
+                              header=0, index_col=None)
+    data['res'] = data['res'].loc[:, [cancer_col_name, drug_col_name, res_col_name]]
 
-    else:
-        # Load drug response data
-        data['res'] = pd.read_csv(response_data_filepath, sep='\t', engine='c', na_values=['na', '-', ''],
-                                  header=0, index_col=None)
-        data['res'] = data['res'].loc[:, [cancer_col_name, drug_col_name, res_col_name]]
-        matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
+    # Match data
+    matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
 
     return matched_data
 

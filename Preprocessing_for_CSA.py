@@ -13,6 +13,10 @@ fdir = os.path.dirname(os.path.realpath(__file__))
 
 study = ['ccle', 'ctrp', 'gcsi', 'gdsc1', 'gdsc2']
 
+cancer_col_name = 'CancID'
+drug_col_name = 'DrugID'
+res_col_name = 'AUC'
+
 input_data_path = os.path.join(fdir, 'Raw_Data')
 output_data_dir = os.path.join(fdir, 'Processed_Data')
 
@@ -26,10 +30,6 @@ input_data_path = os.path.join(input_data_path, 'CSA_Data_July2020')
 
 if not os.path.exists(output_data_dir):
     os.makedirs(output_data_dir, exist_ok=True)
-
-cancer_col_name = 'CancID'
-drug_col_name = 'DrugID'
-res_col_name = 'AUC'
 
 # Load all data
 data = {}
@@ -134,64 +134,59 @@ table_to_image(norm_data, [num_row, num_col], fea_dist_method, image_dist_method
 
 
 
-# To generate matched gene expression, drug descriptor, and response data
-for s in study:
-    # s = 'ccle' # For generating example data
-    cancer_table_data_filepath = os.path.join(input_data_path, 'data.' + s, 'ge_' + s + '.csv')
-    drug_table_data_filepath = os.path.join(input_data_path, 'data.' + s, 'mordred_' + s + '.csv')
-    response_data_filepath = os.path.join(input_data_path, 'data.' + s, 'rsp_ccle.csv')
-    cancer_image_data_filepath = os.path.join(output_data_dir, 'Image_Data', 'Cancer', 'Results.pkl')
-    drug_image_data_filepath = os.path.join(output_data_dir, 'Image_Data', 'Drug', 'Results.pkl')
-    cancer_id_mapping_filepath = os.path.join(output_data_dir, 'CancID_Mapping.txt')
-    drug_id_mapping_filepath = os.path.join(output_data_dir, 'DrugID_Mapping.txt')
-    # Generate response data of training, validation, and testing sets
-    res = pd.read_csv(response_data_filepath)
-
-    for f in range(10):
-        # f = 0 # For generating example data
-
-        train_id = pd.read_csv(os.path.join(input_data_path, 'data.' + s, 'splits', 'split_' + str(f) + '_tr_id')).values[:, 0]
-        num_train = len(train_id)
-        val_id = np.random.permutation(num_train)[:int(np.floor(num_train/9))]
-        val_id = train_id[val_id]
-        train_id = np.setdiff1d(train_id, val_id)
-        test_id = pd.read_csv(os.path.join(input_data_path, 'data.' + s, 'splits', 'split_' + str(f) + '_te_id')).values[:, 0]
-
-        train_response_data_filepath = os.path.join(output_data_dir, 'response_train_' + s + '_split_' + str(f) + '.txt')
-        res.iloc[train_id, :].to_csv(train_response_data_filepath, header=True, index=False, sep='\t', line_terminator='\r\n')
-        val_response_data_filepath = os.path.join(output_data_dir, 'response_val_' + s + '_split_' + str(f) + '.txt')
-        res.iloc[val_id, :].to_csv(val_response_data_filepath, header=True, index=False, sep='\t', line_terminator='\r\n')
-        test_response_data_filepath = []
-        test_data_label = []
-        for s2 in study:
-            test_data_label.append(s + '_' + s2 + '_split_' + str(f))
-            test_response_data_filepath.append(os.path.join(output_data_dir, 'response_test_' + s + '_' + s2 + '_split_' + str(f) + '.txt'))
-            if s2 == s:
-                res.iloc[test_id, :].to_csv(test_response_data_filepath[-1], header=True, index=False, sep='\t', line_terminator='\r\n')
-            else:
-                res.iloc[np.where(res.SOURCE == s2)[0], :].to_csv(test_response_data_filepath[-1], header=True, index=False, sep='\t', line_terminator='\r\n')
-
-        # Generate matched data of training set
-        data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
-                         drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
-                         cancer_col_name, drug_col_name, res_col_name, response_data_filepath=train_response_data_filepath)
-        output = open(os.path.join(output_data_dir, 'data_train_' + s + '_split_' + str(f) + '.pkl'), 'wb')
-        cp.dump(data, output)
-        output.close()
-
-        # Generate matched data of validation set
-        data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
-                         drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
-                         cancer_col_name, drug_col_name, res_col_name, response_data_filepath=val_response_data_filepath)
-        output = open(os.path.join(output_data_dir, 'data_val_' + s + '_split_' + str(f) + '.pkl'), 'wb')
-        cp.dump(data, output)
-        output.close()
-
-        # Generate matched data of testing sets
-        data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
-                         drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
-                         cancer_col_name, drug_col_name, res_col_name, response_data_filepath=test_response_data_filepath,
-                         test_data=test_data_label)
-        output = open(os.path.join(output_data_dir, 'data_test_' + s + '_split_' + str(f) + '.pkl'), 'wb')
-        cp.dump(data, output)
-        output.close()
+# # To generate matched gene expression, drug descriptor, and response data
+# for s in study:
+#     cancer_table_data_filepath = os.path.join(input_data_path, 'data.' + s, 'ge_' + s + '.csv')
+#     drug_table_data_filepath = os.path.join(input_data_path, 'data.' + s, 'mordred_' + s + '.csv')
+#     response_data_filepath = os.path.join(input_data_path, 'data.' + s, 'rsp_' + s + '.csv')
+#     cancer_image_data_filepath = os.path.join(output_data_dir, 'Image_Data', 'Cancer', 'Results.pkl')
+#     drug_image_data_filepath = os.path.join(output_data_dir, 'Image_Data', 'Drug', 'Results.pkl')
+#     cancer_id_mapping_filepath = os.path.join(output_data_dir, 'CancID_Mapping.txt')
+#     drug_id_mapping_filepath = os.path.join(output_data_dir, 'DrugID_Mapping.txt')
+#     res = pd.read_csv(response_data_filepath)
+#
+#     data = load_data(cancer_table_data_filepath, drug_table_data_filepath,
+#                      cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath,
+#                      drug_id_mapping_filepath, cancer_col_name, drug_col_name, res_col_name,
+#                      response_data_filepath)
+#     output = open(os.path.join(output_data_dir, 'data_test_' + s + '.pkl'), 'wb')
+#     cp.dump(data, output, protocol=4)
+#     output.close()
+#
+#     for f in range(10):
+#         train_id = pd.read_csv(os.path.join(input_data_path, 'data.' + s, 'splits', 'split_' + str(f) + '_tr_id')).values[:, 0]
+#         num_train = len(train_id)
+#         val_id = np.random.permutation(num_train)[:int(np.floor(num_train/9))]
+#         val_id = train_id[val_id]
+#         train_id = np.setdiff1d(train_id, val_id)
+#         test_id = pd.read_csv(os.path.join(input_data_path, 'data.' + s, 'splits', 'split_' + str(f) + '_te_id')).values[:, 0]
+#
+#         # Generate matched data of training set
+#         train_response_data_filepath = os.path.join(output_data_dir, 'response_train_' + s + '_split_' + str(f) + '.csv')
+#         res.iloc[train_id, :].to_csv(train_response_data_filepath, header=True, index=False, sep=',', line_terminator='\r\n')
+#         data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
+#                          drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
+#                          cancer_col_name, drug_col_name, res_col_name, train_response_data_filepath)
+#         output = open(os.path.join(output_data_dir, 'data_train_' + s + '_split_' + str(f) + '.pkl'), 'wb')
+#         cp.dump(data, output, protocol=4)
+#         output.close()
+#
+#         # Generate matched data of validation set
+#         val_response_data_filepath = os.path.join(output_data_dir, 'response_val_' + s + '_split_' + str(f) + '.csv')
+#         res.iloc[val_id, :].to_csv(val_response_data_filepath, header=True, index=False, sep=',', line_terminator='\r\n')
+#         data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
+#                          drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
+#                          cancer_col_name, drug_col_name, res_col_name, val_response_data_filepath)
+#         output = open(os.path.join(output_data_dir, 'data_val_' + s + '_split_' + str(f) + '.pkl'), 'wb')
+#         cp.dump(data, output, protocol=4)
+#         output.close()
+#
+#         # Generate matched data of testing set
+#         test_response_data_filepath = os.path.join(output_data_dir, 'response_test_' + s + '_split_' + str(f) + '.csv')
+#         res.iloc[test_id, :].to_csv(test_response_data_filepath, header=True, index=False, sep=',', line_terminator='\r\n')
+#         data = load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
+#                          drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
+#                          cancer_col_name, drug_col_name, res_col_name, test_response_data_filepath)
+#         output = open(os.path.join(output_data_dir, 'data_test_' + s + '_split_' + str(f) + '.pkl'), 'wb')
+#         cp.dump(data, output, protocol=4)
+#         output.close()

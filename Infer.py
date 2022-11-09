@@ -9,8 +9,6 @@ from tensorflow.keras import backend as K
 
 
 
-
-
 # This should be set outside as a user environment variable
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -32,6 +30,10 @@ additional_definitions = [
      'type': bool,
      'help': 'Is the task classification or not'
      },
+    {'name': 'inference_task',
+     'type': str,
+     'help': 'Name of inference task'
+     }
 ]
 
 required = ['output_dir', 'test_data', 'data_url']
@@ -55,7 +57,6 @@ def initialize_parameters():
 
 
 def run(params):
-    # os.environ['CANDLE_DATA_DIR'] = params['candle_data_dir']
 
     if 'test_data' in params.keys():
         candle.get_file(fname=params['test_data'],
@@ -77,25 +78,25 @@ def run(params):
     model = load_model(params['output_dir'] + '/model.h5')
     predResult = {}
     if testData is not None:
-        predResult['test'] = {}
-        for s in testData.keys():
-            if params['classification_task']:
-                testPredResult = np.argmax(a=model.predict(testData[s]).values, axis=1)
-            else:
-                testPredResult = model.predict(testData[s])[:, 0]
-            if testLabel[s] is not None:
-                predResult['test'][s] = pd.DataFrame({params['cancer_col_name']: [i.split('|')[0] for i in testSample[s]],
-                                                   params['drug_col_name']: [i.split('|')[1] for i in testSample[s]],
-                                                   params['res_col_name']: testLabel[s],
-                                                   'Prediction': testPredResult}, index=testSample[s])
-            else:
-                predResult['test'][s] = pd.DataFrame({params['cancer_col_name']: [i.split('|')[0] for i in testSample[s]],
-                                                   params['drug_col_name']: [i.split('|')[1] for i in testSample[s]],
-                                                   'Prediction': testPredResult}, index=testSample[s])
-            predResult['test'][s].to_csv(params['output_dir'] + '/' + 'Test_' + s + '_Prediction_Result.txt',
-                                         header=True, index=False, sep='\t', line_terminator='\r\n')
+        if params['classification_task']:
+            testPredResult = np.argmax(a=model.predict(testData).values, axis=1)
+        else:
+            testPredResult = model.predict(testData)[:, 0]
+        if testLabel is not None:
+            predResult['test'] = pd.DataFrame({params['cancer_col_name']: [i.split('|')[0] for i in testSample],
+                                               params['drug_col_name']: [i.split('|')[1] for i in testSample],
+                                               params['res_col_name']: testLabel,
+                                               'Prediction': testPredResult}, index=testSample)
+        else:
+            predResult['test'] = pd.DataFrame({params['cancer_col_name']: [i.split('|')[0] for i in testSample],
+                                               params['drug_col_name']: [i.split('|')[1] for i in testSample],
+                                               'Prediction': testPredResult}, index=testSample)
+        predResult['test'].to_csv(params['output_dir'] + '/Prediction_Result_Test_' + params['inference_task'] + '.txt',
+                                  header=True, index=False, sep='\t', line_terminator='\r\n')
 
     backend.clear_session()
+
+
 
 def main():
     params = initialize_parameters()
