@@ -211,6 +211,18 @@ def run(params):
 
     backend.clear_session()
 
+    res = params['res_col_name']
+    pcc = predResult['val'].corr(method='pearson').loc[res, 'Prediction']
+    scc = predResult['val'].corr(method='spearman').loc[res, 'Prediction']
+    rmse = ((predResult['val'][res] - predResult['val']['Prediction']) ** 2).mean() ** .5
+    val_loss = history.history['val_loss'][-1]
+
+    scores = {'val_loss':val_loss, 'pcc':pcc, 'scc':scc, 'rmse':rmse}
+    
+    print("\nIMPROVE_RESULT val_loss:\t{}\n".format(scores["val_loss"]))
+    with open(Path(params.output_dir) / "scores.json", "w", encoding="utf-8") as f:
+        json.dump(scores, f, ensure_ascii=False, indent=4)
+    
     return history
 
 
