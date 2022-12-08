@@ -211,9 +211,10 @@ def run(params):
 
     backend.clear_session()
 
-    pcc = predResult['val'].corr(method='pearson').loc['AUC', 'Prediction']
-    scc = predResult['val'].corr(method='spearman').loc['AUC', 'Prediction']
-    rmse = ((predResult['val']['AUC'] - predResult['val']['Prediction']) ** 2).mean() ** .5
+    res = params['res_col_name']
+    pcc = predResult['val'].corr(method='pearson').loc[res, 'Prediction']
+    scc = predResult['val'].corr(method='spearman').loc[res, 'Prediction']
+    rmse = ((predResult['val'][res] - predResult['val']['Prediction']) ** 2).mean() ** .5
     val_loss = history.history['val_loss'][-1]
 
     scores = {'val_loss':val_loss, 'pcc':pcc, 'scc':scc, 'rmse':rmse}
