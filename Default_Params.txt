@@ -14,7 +14,7 @@ cnn_activation='relu'
 inference_task=''
 train_task=''
 
-output_dir='./Result/Test'
+output_dir='./Result'
 conv=[[[16, 5, 5, 1, 1], [32, 5, 5, 1, 1], [64, 5, 5, 1, 1], [128, 5, 5, 1, 1]]]
 dropout=0.1
 epochs=20
