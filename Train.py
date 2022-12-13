@@ -222,7 +222,8 @@ def run(params):
     scores = {'val_loss':val_loss, 'pcc':pcc, 'scc':scc, 'rmse':rmse}
     
     print("\nIMPROVE_RESULT val_loss:\t{}\n".format(scores["val_loss"]))
-    with open(Path(params.output_dir) / "scores.json", "w", encoding="utf-8") as f:
+    # with open(Path(params.output_dir) / "scores.json", "w", encoding="utf-8") as f:
+    with open(params['output_dir'] + '/scores.json', "w", encoding="utf-8") as f:
         json.dump(scores, f, ensure_ascii=False, indent=4)
     
     return history
