@@ -14,7 +14,7 @@ To set up the Python environment needed to run this algorithm:
     conda env create -f environment.yml -n IGTD
     conda activate IGTD
     ```
-5. pip install git+https://github.com/ECP-CANDLE/candle_lib@develop
+5. `pip install git+https://github.com/ECP-CANDLE/candle_lib@develop`
 
 ## Use IGTD to Convert Tabular Data into Images
 
