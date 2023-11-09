@@ -168,32 +168,35 @@ def run(params):
     # ge_map, ge_unique_data = generate_unique_id_mapping(ge.iloc[:, :1000]) # For generating example data
     ge_map, ge_unique_data = generate_unique_id_mapping(ge)
     ge_map.columns = ['CancID', 'Unique_CancID']
-    ge_map.to_csv(os.path.join(output_data_dir, 'CancID_Mapping.txt'), header=True, index=False, sep='\t',
+    ge_map.to_csv(os.path.join(processed_outdir, 'CancID_Mapping.txt'), header=True, index=False, sep='\t',
                   line_terminator='\r\n')
-    ge_unique_data.to_csv(os.path.join(output_data_dir, 'Unique_CancID_Data.txt'), header=True, index=True, sep='\t',
+    ge_unique_data.to_csv(os.path.join(processed_outdir, 'Unique_CancID_Data.txt'), header=True, index=True, sep='\t',
                           line_terminator='\r\n')
     # md_map, md_unique_data = generate_unique_id_mapping(md.iloc[:, :1000]) # For generating example data
     md_map, md_unique_data = generate_unique_id_mapping(md)
     md_map.columns = ['DrugID', 'Unique_DrugID']
-    md_map.to_csv(os.path.join(output_data_dir, 'DrugID_Mapping.txt'), header=True, index=False, sep='\t',
+    md_map.to_csv(os.path.join(processed_outdir, 'DrugID_Mapping.txt'), header=True, index=False, sep='\t',
                   line_terminator='\r\n')
-    md_unique_data.to_csv(os.path.join(output_data_dir, 'Unique_DrugID_Data.txt'), header=True, index=True, sep='\t',
+    md_unique_data.to_csv(os.path.join(processed_outdir, 'Unique_DrugID_Data.txt'), header=True, index=True, sep='\t',
                           line_terminator='\r\n')
 
     # Generate image data of gene expressions with unique IDs
     # num_row = 20    # Number of pixel rows in image representation # For generating example data
     # num_col = 20    # Number of pixel columns in image representation # For generating example data
-    num_row = 50  # Number of pixel rows in image representation
-    num_col = 50  # Number of pixel columns in image representation
-    num = num_row * num_col  # Number of features to be included for analysis, which is also the total number of pixels in image representation
-    save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
-    max_step = 30000  # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
-    val_step = 500  # The number of iterations for determining algorithm convergence. If the error reduction rate
+    # num_row = 50  # Number of pixel rows in image representation
+    # num_col = 50  # Number of pixel columns in image representation
+    # max_step = 30000  # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
+    # val_step = 500  # The number of iterations for determining algorithm convergence. If the error reduction rate
     # is smaller than a pre-set threshold for val_step itertions, the algorithm converges.
 
     # Import the example data and linearly scale each feature so that its minimum and maximum values are 0 and 1, respectively.
-    data = pd.read_csv(os.path.join(output_data_dir, 'Unique_CancID_Data.txt'), low_memory=False, sep='\t', engine='c',
+    data = pd.read_csv(os.path.join(processed_outdir, 'Unique_CancID_Data.txt'), low_memory=False, sep='\t', engine='c',
                        na_values=['na', '-', ''], header=0, index_col=0)
+    if params['num_row'] * params['num_col'] > data.shape[1]:
+        params['num_row'] = int(np.sqrt(data.shape[1]))
+        params['num_col'] = int(np.sqrt(data.shape[1]))
+    num = params['num_row'] * params['num_col']  # Number of features to be included for analysis, which is also the total number of pixels in image representation
+    save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
     fid = select_features_by_variation(data, variation_measure='var', threshold=None, num=num)
     data = data.iloc[:, fid]
     norm_data = min_max_transform(data.values)
@@ -202,28 +205,34 @@ def run(params):
     # Run the IGTD algorithm using (1) the Euclidean distance for calculating pairwise feature distances and pariwise pixel
     # distances and (2) the absolute function for evaluating the difference between the feature distance ranking matrix and
     # the pixel distance ranking matrix. Save the result in Test_1 folder.
-    fea_dist_method = 'Euclidean'
-    image_dist_method = 'Euclidean'
-    error = 'abs'
-    result_dir = output_data_dir + '/Image_Data/Cancer/'
+    # fea_dist_method = 'Euclidean'
+    # image_dist_method = 'Euclidean'
+    # error = 'abs'
+    result_dir = processed_outdir + '/Image_Data/Cancer/'
     os.makedirs(name=result_dir, exist_ok=True)
-    table_to_image(norm_data, [num_row, num_col], fea_dist_method, image_dist_method, save_image_size,
-                   max_step, val_step, result_dir, error, min_gain=0.000001)
+    table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+                   params['image_dist_method'], save_image_size,
+                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
 
     # Generate image data of drug descriptors with unique IDs
     # num_row = 20    # Number of pixel rows in image representation # For generating example data
     # num_col = 20    # Number of pixel columns in image representation # For generating example data
-    num_row = 37  # Number of pixel rows in image representation
-    num_col = 37  # Number of pixel columns in image representation
-    num = num_row * num_col  # Number of features to be included for analysis, which is also the total number of pixels in image representation
-    save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
-    max_step = 30000  # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
-    val_step = 500  # The number of iterations for determining algorithm convergence. If the error reduction rate
+    # num_row = 37  # Number of pixel rows in image representation
+    # num_col = 37  # Number of pixel columns in image representation
+    # num = num_row * num_col  # Number of features to be included for analysis, which is also the total number of pixels in image representation
+    # save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
+    # max_step = 30000  # The maximum number of iterations to run the IGTD algorithm, if it does not converge.
+    # val_step = 500  # The number of iterations for determining algorithm convergence. If the error reduction rate
     # is smaller than a pre-set threshold for val_step itertions, the algorithm converges.
 
     # Import the example data and linearly scale each feature so that its minimum and maximum values are 0 and 1, respectively.
-    data = pd.read_csv(os.path.join(output_data_dir, 'Unique_DrugID_Data.txt'), low_memory=False, sep='\t', engine='c',
+    data = pd.read_csv(os.path.join(processed_outdir, 'Unique_DrugID_Data.txt'), low_memory=False, sep='\t', engine='c',
                        na_values=['na', '-', ''], header=0, index_col=0)
+    if params['num_row'] * params['num_col'] > data.shape[1]:
+        params['num_row'] = int(np.sqrt(data.shape[1]))
+        params['num_col'] = int(np.sqrt(data.shape[1]))
+    num = params['num_row'] * params['num_col']  # Number of features to be included for analysis, which is also the total number of pixels in image representation
+    save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
     fid = select_features_by_variation(data, variation_measure='var', threshold=None, num=num)
     data = data.iloc[:, fid]
     norm_data = min_max_transform(data.values)
@@ -232,13 +241,14 @@ def run(params):
     # Run the IGTD algorithm using (1) the Euclidean distance for calculating pairwise feature distances and pariwise pixel
     # distances and (2) the absolute function for evaluating the difference between the feature distance ranking matrix and
     # the pixel distance ranking matrix. Save the result in Test_1 folder.
-    fea_dist_method = 'Euclidean'
-    image_dist_method = 'Euclidean'
-    error = 'abs'
-    result_dir = output_data_dir + '/Image_Data/Drug/'
+    # fea_dist_method = 'Euclidean'
+    # image_dist_method = 'Euclidean'
+    # error = 'abs'
+    result_dir = processed_outdir + '/Image_Data/Drug/'
     os.makedirs(name=result_dir, exist_ok=True)
-    table_to_image(norm_data, [num_row, num_col], fea_dist_method, image_dist_method, save_image_size,
-                   max_step, val_step, result_dir, error, min_gain=0.000001)
+    table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+                   params['image_dist_method'], save_image_size,
+                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
 
     # To generate matched gene expression, drug descriptor, and response data
     for s in study:
