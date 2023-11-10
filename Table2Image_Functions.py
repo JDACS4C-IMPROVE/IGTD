@@ -45,16 +45,14 @@ def get_full_data(res, ccl, drug, cancer_col_name, drug_col_name, res_col_name=N
 
 
 
-def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image_data_filepath,
-              drug_image_data_filepath, cancer_id_mapping_filepath, drug_id_mapping_filepath,
-              cancer_col_name, drug_col_name, res_col_name, response_data_filepath):
+def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath, 
+              drug_id_mapping_filepath, cancer_col_name, drug_col_name, res_col_name):
     '''
     This function generates data of matched cancer, drug, and response.
 
     Parameters:
     -----------
-    cancer_table_data_filepath: string, file path of cancer data in table format.
-    drug_table_data_filepath: string, file path of drug data in table format.
+    res: data frame of drug response for which data need to be assembled.
     cancer_image_data_filepath: string, file path of cancer data in image format.
     drug_image_data_filepath: string, file path of drug data in image format.
     cancer_id_mapping_filepath: string, file path of the mapping between cancer IDs and unique cancer IDs.
@@ -62,14 +60,12 @@ def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image
     cancer_col_name: string, column name of cancer IDs in data frame
     drug_col_name: string, column name of drug IDs in data frame
     res_col_name: string, column name of response in data frame
-    response_data_filepath: string, file path to the response data.
 
     Returns:
     --------
     matched_data: a dictionary of 'data', 'label', and 'sample' of cancer, drug, and response matched data.
-        If for generating data of testing set, each of the 'data', 'label', and 'sample' elements is a dictionary
-        of elements of different testing sets.
     '''
+    
     ccl_map = pd.read_csv(cancer_id_mapping_filepath, sep='\t', engine='c',
                           na_values=['na', '-', ''], header=0, index_col=None).drop_duplicates()
     ccl_map.index = ccl_map.iloc[:, 0]
@@ -99,24 +95,20 @@ def load_data(cancer_table_data_filepath, drug_table_data_filepath, cancer_image
 
     # Load gene expression data
     data['ge'] = {}
-    data['ge']['ori_data'] = pd.read_csv(cancer_table_data_filepath)        # Gene expressions
-    data['ge']['sample'] = data['ge']['ori_data'].loc[:, cancer_col_name]
+    data['ge']['sample'] = np.unique(res.loc[:, cancer_col_name])
     id = ID_mapping(ccl_samples, ccl_map.loc[data['ge']['sample'], 'Unique_CancID'])
     data['ge']['data'] = np.empty((len(id), ccl_data.shape[1], ccl_data.shape[2], 1))
     data['ge']['data'][:, :, :, 0] = ccl_data[id, :, :]
 
     # Load drug data
     data['md'] = {}
-    data['md']['ori_data'] = pd.read_csv(drug_table_data_filepath)  # Mordred descriptors
-    data['md']['sample'] = data['md']['ori_data'].loc[:, drug_col_name]
+    data['md']['sample'] = np.unique(res.loc[:, drug_col_name])
     id = ID_mapping(drug_samples, drug_map.loc[data['md']['sample'], 'Unique_DrugID'])
     data['md']['data'] = np.empty((len(id), drug_data.shape[1], drug_data.shape[2], 1))
     data['md']['data'][:, :, :, 0] = drug_data[id, :, :]
 
     # Load response data
-    data['res'] = pd.read_csv(response_data_filepath, sep=',', engine='c', na_values=['na', '-', ''],
-                              header=0, index_col=None)
-    data['res'] = data['res'].loc[:, [cancer_col_name, drug_col_name, res_col_name]]
+    data['res'] = res.loc[:, [cancer_col_name, drug_col_name, res_col_name]]
 
     # Match data
     matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
