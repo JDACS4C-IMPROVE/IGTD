@@ -1,15 +1,18 @@
 import pandas as pd
-import sys
 import numpy as np
 import os
+
+
+
 from pathlib import Path
-# import candle
 import _pickle as cp
 from Table2Image_Functions import min_max_transform, table_to_image, select_features_by_variation, \
     generate_unique_id_mapping, load_data
 
 from improve import framework as frm
 from improve import drug_resp_pred as drp
+
+
 
 filepath = Path(__file__).resolve().parent
 
@@ -29,12 +32,12 @@ model_preproc_params = [
     },
     {"name": "max_step",
      "type": int,
-     "default": 300, # 30000
+     "default": 50000, # 30000
      "help": "The maximum number of iterations to run the IGTD algorithm, if it does not converge.",
     },
     {"name": "val_step",
      "type": int,
-     "default": 5, # 500
+     "default": 500, # 500
      "help": "The number of iterations for determining algorithm convergence. If the error reduction rate.",
      },
     {"name": "fea_dist_method",
@@ -61,7 +64,7 @@ model_preproc_params = [
 
 # App-specific params (App: drug response prediction)
 # TODO: consider moving this list to drug_resp_pred.py module
-drp_preproc_params = [
+app_preproc_params = [
     {"name": "x_data_canc_files",  # app;
      # "nargs": "+",
      "type": str,
@@ -86,21 +89,23 @@ drp_preproc_params = [
      "default": "improve_chem_id",
      "type": str,
      "help": "Column name that contains the drug ids.",
-    },
+    }
 ]
 
-preprocess_params = model_preproc_params + drp_preproc_params
+preprocess_params = model_preproc_params + app_preproc_params
 
-req_preprocess_args = [ll["name"] for ll in preprocess_params]  # TODO: it seems that all args specifiied to be 'req'. Why?
+req_preprocess_args = [ll["name"] for ll in preprocess_params]
 
-req_preprocess_args.extend(["y_col_name", "model_outdir"])  # TODO: Does 'req' mean no defaults are specified?
+req_preprocess_args.extend(["ml_data_outdir", "data_format", "y_col_name",
+                            "train_split_file", "val_split_file", "test_split_file"])
 
 
 
 def run(params):
 
+    # [Req] Build paths and create output dir
     params = frm.build_paths(params)  # paths to raw data
-    processed_outdir = frm.create_ml_data_outpath(params)
+    processed_outdir = frm.create_outdir(outdir=params["ml_data_outdir"])
 
     print("\nLoading omics data...")
     oo = drp.OmicsLoader(params)
@@ -126,9 +131,9 @@ def run(params):
     if not os.path.exists(processed_outdir):
         os.makedirs(processed_outdir, exist_ok=True)
 
-    ################# temporary code ###############
-    ge = ge.iloc[:, :3000]
-    ############################################
+    # ################# temporary code ###############
+    # ge = ge.iloc[:, :3000]
+    # ############################################
 
     ge = ge.loc[np.unique(df_response.improve_sample_id), :]
     id = np.where(np.std(ge, axis=0) > 0)[0]
@@ -196,48 +201,36 @@ def run(params):
               "val": rr_val.dfs["response.tsv"],
               "test": rr_test.dfs["response.tsv"]}
     for stage, res in stages.items():
-        data_fname = frm.build_ml_data_name(params, stage, params['file_format'])
+        data_fname = frm.build_ml_data_name(params, stage)
         data = load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath,
                          drug_id_mapping_filepath, params['canc_col_name'], params['drug_col_name'], params['y_col_name'])
         output = open(os.path.join(processed_outdir, data_fname), 'wb')
         cp.dump(data, output, protocol=4)
         output.close()
 
+        # [Req] Save y dataframe for the current stage
+        res_to_save = pd.DataFrame({params['canc_col_name']: [i.split('|')[0] for i in data['sample']],
+                                    params['drug_col_name']: [i.split('|')[1] for i in data['sample']],
+                                    params['y_col_name']: data['label']}, index=None)
+        frm.save_stage_ydf(res_to_save, params, stage)
+
     return processed_outdir
 
 
+
 def main():
+    # [Req]
     params = frm.initialize_parameters(
         filepath,
-        default_model="IGTD_default_model.txt",
+        default_model="IGTD_params.txt",
         additional_definitions=preprocess_params,
         required=req_preprocess_args,
     )
     processed_outdir = run(params)
-    print("\nFinished GraphDRP pre-processing (transformed raw DRP data to model input ML data).")
+    print("\nFinished data preprocessing.")
 
 
+
+# [Req]
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
