@@ -190,8 +190,8 @@ for source_data_name in source_datasets:
                   "--y_col_name", str(y_col_name)
             ]
             result = subprocess.run(preprocess_run,
-#                                    capture_output=True,
-#                                    text=True,
+#                                    capture_output=True,   # This parameter is not defined in python3.6
+#                                    text=True,             # This parameter is not defined in python3.6
                                     check=True)
             # print(result.stdout)
             # print(result.stderr)
