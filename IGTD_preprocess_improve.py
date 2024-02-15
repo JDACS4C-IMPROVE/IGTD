@@ -1,16 +1,13 @@
 import pandas as pd
 import numpy as np
 import os
-
-
-
 from pathlib import Path
 import _pickle as cp
 from Table2Image_Functions import min_max_transform, table_to_image, select_features_by_variation, \
     generate_unique_id_mapping, load_data
-
 from improve import framework as frm
 from improve import drug_resp_pred as drp
+import multiprocessing
 
 
 
@@ -32,7 +29,7 @@ model_preproc_params = [
     },
     {"name": "max_step",
      "type": int,
-     "default": 50000, # 30000
+     "default": 50000, # 50000
      "help": "The maximum number of iterations to run the IGTD algorithm, if it does not converge.",
     },
     {"name": "val_step",
@@ -170,9 +167,13 @@ def run(params):
 
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Cancer')
     os.makedirs(name=result_dir, exist_ok=True)
-    table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
-                   params['image_dist_method'], save_image_size,
-                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+    # table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+    #                params['image_dist_method'], save_image_size,
+    #                params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+    proc1 = multiprocessing.Process(target=table_to_image, args=(norm_data, [params['num_row'], params['num_col']],
+        params['fea_dist_method'], params['image_dist_method'], save_image_size, params['max_step'],
+        params['val_step'], result_dir, params['error'], 0, 0.000001))
+    proc1.start()
 
     # Import the example data and linearly scale each feature so that its minimum and maximum values are 0 and 1, respectively.
     data = pd.read_csv(os.path.join(processed_outdir, 'Unique_DrugID_Data.txt'), low_memory=False, sep='\t', engine='c',
@@ -189,9 +190,15 @@ def run(params):
 
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Drug')
     os.makedirs(name=result_dir, exist_ok=True)
-    table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
-                   params['image_dist_method'], save_image_size,
-                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+    # table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+    #                params['image_dist_method'], save_image_size,
+    #                params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+    proc2 = multiprocessing.Process(target=table_to_image, args=(norm_data, [params['num_row'], params['num_col']],
+        params['fea_dist_method'], params['image_dist_method'], save_image_size, params['max_step'],
+        params['val_step'], result_dir, params['error'], 0, 0.000001))
+    proc2.start()
+    proc1.join()
+    proc2.join()
 
     cancer_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Cancer', 'Results.pkl')
     drug_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Drug', 'Results.pkl')
