@@ -138,6 +138,9 @@ def run(params):
     else:
         input_data_dim = [[trainData.shape[1], trainData.shape[2]]]
 
+    # should be output_dir
+    checkpoint_dir = params['model_outdir'] + '/ckpts'
+
     train_logger = CSVLogger(filename=params['model_outdir'] + '/log.csv')
     # model_saver = ModelCheckpoint(params['model_outdir'] + '/model.h5',
     model_saver = ModelCheckpoint(filepath=modelpath, monitor=monitor, save_best_only=True, save_weights_only=False)
