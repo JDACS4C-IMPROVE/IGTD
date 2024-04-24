@@ -96,8 +96,19 @@ def run(params):
     # ------------------------------------------------------
     # [Req] Create output dir for the model.
     # ------------------------------------------------------
+
+    if params["model_outdir"] != params['output_dir'] :
+        print("ERROR: Output directories not identical. Check options.")
+        print("model_outdir=" + params["model_outdir"])
+        print("output_dir=" + params['output_dir'])
+    
     frm.create_outdir(outdir=params["model_outdir"])
-    modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
+    frm.create_outdir(outdir=params['output_dir'])
+
+    if params['output_dir'] and os.path.isdir(params['output_dir']) :
+        modelpath = str(frm.build_model_path(params, model_dir=params["output_dir"]))
+    else:
+        modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
 
     # ------------------------------------------------------
     # [Req] Create data names for train and val
