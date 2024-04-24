@@ -141,9 +141,14 @@ def run(params):
     # should be output_dir
     checkpoint_dir = params['model_outdir'] + '/ckpts'
 
+    if os.path.isdir(modelpath) :
+        print("Output dir exists:\t" + modelpath )
+    else:
+        print("Missing output directory:\t" + modelpath)
+
     train_logger = CSVLogger(filename=params['model_outdir'] + '/log.csv')
     # model_saver = ModelCheckpoint(params['model_outdir'] + '/model.h5',
-    model_saver = ModelCheckpoint(filepath=checkpoint_dir, monitor=monitor, save_best_only=True, save_weights_only=False)
+    model_saver = ModelCheckpoint(filepath=modelpath , monitor=monitor, save_best_only=True, save_weights_only=False)
     reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=params['rlr_factor'], patience=params['rlr_patience'],
                                   verbose=1, mode='auto', min_delta=params['rlr_min_delta'],
                                   cooldown=params['rlr_cooldown'], min_lr=params['rlr_min_lr'])
