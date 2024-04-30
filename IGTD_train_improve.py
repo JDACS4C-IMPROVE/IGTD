@@ -110,6 +110,10 @@ def run(params):
     else:
         modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
 
+    # Use model_outdir for this iteration - switch to output_dir in next release
+    modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
+
+
     # ------------------------------------------------------
     # [Req] Create data names for train and val
     # ------------------------------------------------------
@@ -255,7 +259,7 @@ def main():
         required=req_train_args
     )
     val_scores = run(params)
-    print("\nFinished training GraphDRP model.")
+    print("\nFinished training IGTD model.")
 
 
 if __name__ == "__main__":
