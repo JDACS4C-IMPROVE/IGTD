@@ -77,7 +77,7 @@ req_train_args.extend(['model_outdir', 'y_col_name', 'train_ml_data_dir', 'val_m
                        'model_file_format', 'data_format', 'learning_rate', 'conv', 'dropout', 'epochs', 'pool', 'dense',
                        'activation', 'loss', 'optimizer', 'verbose', 'batch_size', 'early_stop'])
 
-metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
+metrics_list = ["mse", "pcc", "scc", "r2"]
 
 
 
@@ -96,6 +96,8 @@ def run(params):
     # ------------------------------------------------------
     # [Req] Create output dir for the model.
     # ------------------------------------------------------
+
+    params['output_dir'] = params["model_outdir"]
 
     if params["model_outdir"] != params['output_dir'] :
         print("ERROR: Output directories not identical. Check options.")
