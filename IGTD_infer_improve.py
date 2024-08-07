@@ -46,7 +46,7 @@ req_infer_args = [ll["name"] for ll in infer_params]
 req_infer_args.extend(['model_dir', 'y_col_name', 'test_ml_data_dir', 'model_file_name', 'model_file_format',
                        'data_format', 'infer_outdir'])
 
-metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
+metrics_list = ["mse", "pcc", "scc", "r2"]
 
 
 
