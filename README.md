@@ -83,6 +83,7 @@ Create conda env using `yml`
 ```
 conda env create -f environment.yml -n IGTD
 conda activate IGTD
+pip install git+https://github.com/ECP-CANDLE/candle_lib@develop
 ```
 
 
