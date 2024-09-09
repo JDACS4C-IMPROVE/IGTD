@@ -6,7 +6,10 @@ from keras import backend
 from keras.models import load_model
 from tensorflow.keras import backend as K
 # [Req] IMPROVE/CANDLE imports
-from improve import framework as frm
+#from improve import framework as frm
+from improvelib.applications.drug_response_prediction.config import DRPInferConfig
+import improvelib.utils as frm
+from model_params_def import infer_params
 
 
 
@@ -15,54 +18,19 @@ filepath = os.path.dirname(os.path.realpath(__file__))
 
 
 
-app_infer_params = [
-    {"name": "canc_col_name",
-     "default": "improve_sample_id",
-     "type": str,
-     "help": "Column name that contains the cancer sample ids.",
-     },
-    {"name": "drug_col_name",
-     "default": "improve_chem_id",
-     "type": str,
-     "help": "Column name that contains the drug ids.",
-     }
-]
-
-model_infer_params = [
-    {'name': 'classification_task',
-     'type': bool,
-     'help': 'Is the task classification or not'
-     },
-    {'name': 'inference_task',
-     'type': str,
-     'help': 'Name of inference task'
-     }
-]
-
-infer_params = model_infer_params + app_infer_params
-
-req_infer_args = [ll["name"] for ll in infer_params]
-
-req_infer_args.extend(['model_dir', 'y_col_name', 'test_ml_data_dir', 'model_file_name', 'model_file_format',
-                       'data_format', 'infer_outdir'])
-
-metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
-
-
-
 def run(params):
 
     # ------------------------------------------------------
     # [Req] Create output dir
     # ------------------------------------------------------
-    frm.create_outdir(outdir=params["infer_outdir"])
+    frm.create_outdir(outdir=params["output_dir"])
 
     # ------------------------------------------------------
     # [Req] Create data name for test set
     # ------------------------------------------------------
-    test_data_fname = frm.build_ml_data_name(params, stage="test")
+    test_data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage="test")
 
-    pkl_file = open(os.path.join(params['test_ml_data_dir'], test_data_fname), 'rb')
+    pkl_file = open(os.path.join(params['input_data_dir'], test_data_fname), 'rb')
     temp_data = cp.load(pkl_file)
     pkl_file.close()
     testData = temp_data['data']
@@ -70,7 +38,10 @@ def run(params):
     testSample = temp_data['sample']
 
     # [Req] Build model path
-    modelpath = str(frm.build_model_path(params, model_dir=params["model_dir"]))
+    modelpath = str(frm.build_model_path(
+        model_file_name=params["model_file_name"],
+        model_file_format=params["model_file_format"],
+        model_dir=params["input_model_dir"]))
     model = load_model(modelpath)
 
     predResult = {}
@@ -87,7 +58,7 @@ def run(params):
         predResult['test'] = pd.DataFrame({params['canc_col_name']: [i.split('|')[0] for i in testSample],
                                            params['drug_col_name']: [i.split('|')[1] for i in testSample],
                                            'Prediction': testPredResult}, index=testSample)
-    predResult['test'].to_csv(params['infer_outdir'] + '/Prediction_Result_Test_' + params['inference_task'] + '.txt',
+    predResult['test'].to_csv(params['output_dir'] + '/Prediction_Result_Test_' + params['inference_task'] + '.txt',
                               header=True, index=False, sep='\t', line_terminator='\r\n')
 
     backend.clear_session()
@@ -96,31 +67,33 @@ def run(params):
     # [Req] Save raw predictions in dataframe
     # ------------------------------------------------------
     frm.store_predictions_df(
-        params,
-        y_true=testLabel, y_pred=testPredResult, stage="test",
-        outdir=params["infer_outdir"]
-    )
+        y_true=testLabel,
+        y_pred=testPredResult,
+        stage="test",
+        y_col_name=params["y_col_name"],
+        output_dir=params["output_dir"])
 
     # ------------------------------------------------------
     # [Req] Compute performance scores
     # ------------------------------------------------------
-    test_scores = frm.compute_performace_scores(
-        params,
-        y_true=testLabel, y_pred=testPredResult, stage="test",
-        outdir=params["infer_outdir"], metrics=metrics_list
-    )
+    if params["calc_infer_scores"]:
+        test_scores = frm.compute_performance_scores(
+            y_true=testLabel,
+            y_pred=testPredResult,
+            stage="test",
+            metric_type=params["metric_type"],
+            output_dir=params["output_dir"]
+        )
 
     return test_scores
 
 
 def main():
-    # [Req]
-    params = frm.initialize_parameters(
-        filepath,
-        default_model="IGTD_params.txt",
-        additional_definitions=infer_params,
-        required=req_infer_args
-    )
+    cfg = DRPInferConfig()
+    params = cfg.initialize_parameters(
+        pathToModelDir=filepath,
+        default_config="IGTD_params.txt",
+        additional_definitions=infer_params)
     test_scores = run(params)
     print("\nFinished model inference.")
 

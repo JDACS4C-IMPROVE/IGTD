@@ -9,75 +9,14 @@ from keras import backend
 from keras.models import load_model
 from tensorflow.keras import backend as K
 
-from improve import framework as frm
+#from improve import framework as frm
+from improvelib.applications.drug_response_prediction.config import DRPTrainConfig
+import improvelib.utils as frm
+from model_params_def import train_params
 
 filepath = Path(__file__).resolve().parent
 
-app_train_params = [
-    {"name": "canc_col_name",
-     "default": "improve_sample_id",
-     "type": str,
-     "help": "Column name that contains the cancer sample ids.",
-     },
-    {"name": "drug_col_name",
-     "default": "improve_chem_id",
-     "type": str,
-     "help": "Column name that contains the drug ids.",
-     }
-]
 
-model_train_params = [
-    {'name': 'rlr_factor',
-     'type': float,
-     'help': 'Learning rate reduction factor'
-     },
-    {'name': 'rlr_min_delta',
-     'type': float,
-     'help': 'Learning rate reduction minimum delta'
-     },
-    {'name': 'rlr_cooldown',
-     'type': int,
-     'help': 'Learning rate reduction cooldown'
-     },
-    {'name': 'rlr_min_lr',
-     'type': float,
-     'help': 'Learning rate reduction minimum learning rate'
-     },
-    {'name': 'rlr_patience',
-     'type': int,
-     'help': 'Learning rate reduction patience'
-     },
-    {'name': 'es_patience',
-     'type': int,
-     'help': 'Early stop patience'
-     },
-    {'name': 'es_min_delta',
-     'type': float,
-     'help': 'Early stop minimum delta'
-     },
-    {'name': 'classification_task',
-     'type': bool,
-     'help': 'Is the task classification or not'
-     },
-    {'name': 'cnn_activation',
-     'type': str,
-     'help': 'Activation function for convolution layers'
-     },
-    {'name': 'train_task',
-     'type': str,
-     'help': 'Name of training task'
-     }
-]
-
-train_params = model_train_params + app_train_params
-
-req_train_args = [ll["name"] for ll in train_params]
-
-req_train_args.extend(['model_outdir', 'y_col_name', 'train_ml_data_dir', 'val_ml_data_dir', 'model_file_name',
-                       'model_file_format', 'data_format', 'learning_rate', 'conv', 'dropout', 'epochs', 'pool', 'dense',
-                       'activation', 'loss', 'optimizer', 'verbose', 'batch_size', 'early_stop'])
-
-metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
 
 
 
@@ -91,58 +30,45 @@ def run(params):
 # infer using model
 # etc
 
-    params['verbose'] = 2
+    #params['verbose'] = 2
 
     # ------------------------------------------------------
     # [Req] Create output dir for the model.
     # ------------------------------------------------------
 
-    if params["model_outdir"] != params['output_dir'] :
-        print("ERROR: Output directories not identical. Check options.")
-        print("model_outdir=" + params["model_outdir"])
-        print("output_dir=" + params['output_dir'])
-    
-    frm.create_outdir(outdir=params["model_outdir"])
     frm.create_outdir(outdir=params['output_dir'])
 
-    if params['output_dir'] and os.path.isdir(params['output_dir']) :
-        modelpath = str(frm.build_model_path(params, model_dir=params["output_dir"]))
-    else:
-        modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
-
-    # Use model_outdir for this iteration - switch to output_dir in next release
-    modelpath = str(frm.build_model_path(params, model_dir=params["model_outdir"]))
+    modelpath = str(frm.build_model_path(
+        model_file_name=params["model_file_name"],
+        model_file_format=params["model_file_format"],
+        model_dir=params["output_dir"]))
 
 
     # ------------------------------------------------------
     # [Req] Create data names for train and val
     # ------------------------------------------------------
-    train_data_fname = frm.build_ml_data_name(params, stage="train")
-    val_data_fname = frm.build_ml_data_name(params, stage="val")
+    train_data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage="train")
+    val_data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage="val")
 
     # ------------------------------------------------------
     # Load model input data (ML data)
     # ------------------------------------------------------
-    pkl_file = open(os.path.join(params['train_ml_data_dir'], train_data_fname), 'rb')
+    pkl_file = open(os.path.join(params['input_dir'], train_data_fname), 'rb')
     temp_data = cp.load(pkl_file)
     pkl_file.close()
     trainData = temp_data['data']
     trainLabel = temp_data['label']
     trainSample = temp_data['sample']
 
-    if 'val_ml_data_dir' in params.keys():
-        pkl_file = open(os.path.join(params['val_ml_data_dir'], val_data_fname), 'rb')
-        temp_data = cp.load(pkl_file)
-        pkl_file.close()
-        valData = temp_data['data']
-        valLabel = temp_data['label']
-        valSample = temp_data['sample']
-        monitor = 'val_loss'
-    else:
-        valData = None
-        valLabel = None
-        valSample = None
-        monitor = 'loss'
+
+    pkl_file = open(os.path.join(params['input_dir'], val_data_fname), 'rb')
+    temp_data = cp.load(pkl_file)
+    pkl_file.close()
+    valData = temp_data['data']
+    valLabel = temp_data['label']
+    valSample = temp_data['sample']
+    monitor = 'val_loss'
+
 
     batch_size = params['batch_size']
 
@@ -154,14 +80,14 @@ def run(params):
         input_data_dim = [[trainData.shape[1], trainData.shape[2]]]
 
     # should be output_dir
-    checkpoint_dir = params['model_outdir'] + '/ckpts'
+    checkpoint_dir = params['output_dir'] + '/ckpts'
 
     if os.path.isdir(modelpath) :
         print("Output dir exists:\t" + modelpath )
     else:
         print("Missing output directory:\t" + modelpath)
 
-    train_logger = CSVLogger(filename=params['model_outdir'] + '/log.csv')
+    train_logger = CSVLogger(filename=params['output_dir'] + '/log.csv')
     # model_saver = ModelCheckpoint(params['model_outdir'] + '/model.h5',
     model_saver = ModelCheckpoint(filepath=modelpath , monitor=monitor, save_best_only=True, save_weights_only=False)
     reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=params['rlr_factor'], patience=params['rlr_patience'],
@@ -211,7 +137,7 @@ def run(params):
                                         params['drug_col_name']: [i.split('|')[1] for i in trainSample],
                                         params['y_col_name']: trainLabel,
                                         'Prediction': trainPredResult}, index=trainSample)
-    predResult['train'].to_csv(params['model_outdir'] + '/Prediction_Result_Train_' + params['train_task'] + '.txt', header=True,
+    predResult['train'].to_csv(params['output_dir'] + '/Prediction_Result_Train_' + params['train_task'] + '.txt', header=True,
                                index=False, sep='\t', line_terminator='\r\n')
 
     if valData is not None:
@@ -223,7 +149,7 @@ def run(params):
                                           params['drug_col_name']: [i.split('|')[1] for i in valSample],
                                           params['y_col_name']: valLabel,
                                           'Prediction': valPredResult}, index=valSample)
-        predResult['val'].to_csv(params['model_outdir'] + '/Prediction_Result_Val_' + params['train_task'] + '.txt', header=True,
+        predResult['val'].to_csv(params['output_dir'] + '/Prediction_Result_Val_' + params['train_task'] + '.txt', header=True,
                                  index=False, sep='\t', line_terminator='\r\n')
 
     backend.clear_session()
@@ -232,18 +158,21 @@ def run(params):
     # [Req] Save raw predictions in dataframe
     # ------------------------------------------------------
     frm.store_predictions_df(
-        params,
-        y_true=valLabel, y_pred=valPredResult, stage="val",
-        outdir=params["model_outdir"]
-    )
+        y_true=valLabel,
+        y_pred=valPredResult,
+        stage="val",
+        y_col_name=params["y_col_name"],
+        output_dir=params["output_dir"])
 
     # ------------------------------------------------------
     # [Req] Compute performance scores
     # ------------------------------------------------------
-    val_scores = frm.compute_performace_scores(
-        params,
-        y_true=valLabel, y_pred=valPredResult, stage="val",
-        outdir=params["model_outdir"], metrics=metrics_list
+    val_scores = frm.compute_performance_scores(
+        y_true=valLabel,
+        y_pred=valPredResult,
+        stage="val",
+        metric_type=params["metric_type"],
+        output_dir=params["output_dir"]
     )
 
     return val_scores
@@ -251,13 +180,11 @@ def run(params):
 
 
 def main():
-    # [Req]
-    params = frm.initialize_parameters(
-        filepath,
-        default_model="IGTD_params.txt",
-        additional_definitions=train_params,
-        required=req_train_args
-    )
+    cfg = DRPTrainConfig()
+    params = cfg.initialize_parameters(
+        pathToModelDir=filepath,
+        default_config="IGTD_params.txt",
+        additional_definitions=train_params)
     val_scores = run(params)
     print("\nFinished training IGTD model.")
 

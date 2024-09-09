@@ -5,107 +5,27 @@ from pathlib import Path
 import _pickle as cp
 from Table2Image_Functions import min_max_transform, table_to_image, select_features_by_variation, \
     generate_unique_id_mapping, load_data
-from improve import framework as frm
-from improve import drug_resp_pred as drp
+#from improve import framework as frm
+#from improve import drug_resp_pred as drp
 import multiprocessing
 
-
+from improvelib.applications.drug_response_prediction.config import DRPPreprocessConfig
+import improvelib.utils as frm
+import improvelib.applications.drug_response_prediction.drug_utils as drugs_utils
+import improvelib.applications.drug_response_prediction.omics_utils as omics_utils
+import improvelib.applications.drug_response_prediction.drp_utils as drp
+from model_params_def import preprocess_params
 
 filepath = Path(__file__).resolve().parent
-
-
-
-# Model-specific params (Model: IGTD)
-model_preproc_params = [
-    {"name": "num_row",
-     "type": int,
-     "default": 50,
-     "help": "Number of pixel rows in generated image.",
-    },
-    {"name": "num_col",
-     "type": int,
-     "default": 50,
-     "help": "Number of pixel columns in generated image.",
-    },
-    {"name": "max_step",
-     "type": int,
-     "default": 50000, # 50000
-     "help": "The maximum number of iterations to run the IGTD algorithm, if it does not converge.",
-    },
-    {"name": "val_step",
-     "type": int,
-     "default": 500, # 500
-     "help": "The number of iterations for determining algorithm convergence. If the error reduction rate.",
-     },
-    {"name": "fea_dist_method",
-     "type": str,
-     "choice": ["Pearson", "Spearman", "set"],
-     "default": "Euclidean",
-     "help": "Method used for calculating the pairwise distances between features.",
-     },
-    {"name": "image_dist_method",
-     "type": str,
-     "choice": ["Euclidean", "Manhattan"],
-     "default": "Euclidean",
-     "help": "Method used for calculating the distances between pixels in image.",
-     },
-    {"name": "error",
-     "type": str,
-     "choice": ["abs", "squared"],
-     "default": "abs",
-     "help": "Function for evaluating the difference between feature distance ranking and pixel distance ranking.",
-     }
-]
-
-
-
-# App-specific params (App: drug response prediction)
-# TODO: consider moving this list to drug_resp_pred.py module
-app_preproc_params = [
-    {"name": "x_data_canc_files",  # app;
-     # "nargs": "+",
-     "type": str,
-     "help": "List of feature files.",
-    },
-    {"name": "x_data_drug_files",  # app;
-     # "nargs": "+",
-     "type": str,
-     "help": "List of feature files.",
-    },
-    {"name": "y_data_files",  # imp;
-     # "nargs": "+",
-     "type": str,
-     "help": "List of output files.",
-    },
-    {"name": "canc_col_name",  # app;
-     "default": "improve_sample_id",
-     "type": str,
-     "help": "Column name that contains the cancer sample ids.",
-    },
-    {"name": "drug_col_name",  # app;
-     "default": "improve_chem_id",
-     "type": str,
-     "help": "Column name that contains the drug ids.",
-    }
-]
-
-preprocess_params = model_preproc_params + app_preproc_params
-
-req_preprocess_args = [ll["name"] for ll in preprocess_params]
-
-req_preprocess_args.extend(["ml_data_outdir", "data_format", "y_col_name",
-                            "train_split_file", "val_split_file", "test_split_file"])
-
 
 
 def run(params):
 
     # [Req] Build paths and create output dir
-    params = frm.build_paths(params)  # paths to raw data
-    processed_outdir = frm.create_outdir(outdir=params["ml_data_outdir"])
+    processed_outdir = frm.create_outdir(outdir=params["output_dir"])
 
     print("\nLoading omics data...")
-    oo = drp.OmicsLoader(params)
+    oo = omics_utils.OmicsLoader(params)
     print(oo)
     ge = oo.dfs['cancer_gene_expression.tsv']  # get the needed canc x data
 
@@ -115,7 +35,7 @@ def run(params):
     #####################################
 
     print("\nLoading drugs data...")
-    dd = drp.DrugsLoader(params)
+    dd = drugs_utils.DrugsLoader(params)
     print(dd)
     md = dd.dfs['drug_mordred.tsv']  # get the needed drug x data
 
@@ -208,7 +128,7 @@ def run(params):
               "val": rr_val.dfs["response.tsv"],
               "test": rr_test.dfs["response.tsv"]}
     for stage, res in stages.items():
-        data_fname = frm.build_ml_data_name(params, stage)
+        data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage=stage)
         data = load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath,
                          drug_id_mapping_filepath, params['canc_col_name'], params['drug_col_name'], params['y_col_name'])
         output = open(os.path.join(processed_outdir, data_fname), 'wb')
@@ -219,20 +139,18 @@ def run(params):
         res_to_save = pd.DataFrame({params['canc_col_name']: [i.split('|')[0] for i in data['sample']],
                                     params['drug_col_name']: [i.split('|')[1] for i in data['sample']],
                                     params['y_col_name']: data['label']}, index=None)
-        frm.save_stage_ydf(res_to_save, params, stage)
+        frm.save_stage_ydf(ydf=res_to_save, stage=stage, output_dir=params["output_dir"])
 
     return processed_outdir
 
 
 
 def main():
-    # [Req]
-    params = frm.initialize_parameters(
-        filepath,
-        default_model="IGTD_params.txt",
-        additional_definitions=preprocess_params,
-        required=req_preprocess_args,
-    )
+    cfg = DRPPreprocessConfig()
+    params = cfg.initialize_parameters(
+        pathToModelDir=filepath,
+        default_config="IGTD_params.txt",
+        additional_definitions=preprocess_params)
     processed_outdir = run(params)
     print("\nFinished data preprocessing.")
 
