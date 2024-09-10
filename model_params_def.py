@@ -100,6 +100,21 @@ train_params = [
      "default": 2,
      "help": "Vebosity for model."
      },
+    {"name": "conv",
+     "nargs": "+",
+     "default": [],
+     "help": "conv."
+     },
+    {"name": "pool",
+     "nargs": "+",
+     "default": [],
+     "help": "pool."
+     },
+    {"name": "optimizer",
+     "type": str,
+     "default": "Adam",
+     "help": "optimizer."
+     },
 ]
 infer_params = [
     {'name': 'classification_task',
