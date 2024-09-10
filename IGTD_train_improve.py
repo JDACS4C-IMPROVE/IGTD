@@ -93,7 +93,7 @@ def run(params):
     reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=params['rlr_factor'], patience=params['rlr_patience'],
                                   verbose=1, mode='auto', min_delta=params['rlr_min_delta'],
                                   cooldown=params['rlr_cooldown'], min_lr=params['rlr_min_lr'])
-    early_stop = EarlyStopping(monitor=monitor, patience=params['es_patience'], min_delta=params['es_min_delta'],
+    early_stop = EarlyStopping(monitor=monitor, patience=params['patience'], min_delta=params['es_min_delta'],
                                verbose=1)
     callbacks = [model_saver, train_logger, reduce_lr, early_stop]
 
