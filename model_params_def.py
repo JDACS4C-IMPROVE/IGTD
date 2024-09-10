@@ -120,6 +120,11 @@ train_params = [
      "default": "Adam",
      "help": "optimizer."
      },
+    {"name": "activation",
+     "type": str,
+     "default": "relu",
+     "help": "activation."
+     },
 ]
 infer_params = [
     {'name': 'classification_task',

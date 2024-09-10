@@ -27,6 +27,7 @@ conv = [[[16, 5, 5, 1, 1], [32, 5, 5, 1, 1], [64, 5, 5, 1, 1], [128, 5, 5, 1, 1]
 pool = [[2, 2]]
 dense = [1000, 500, 250, 125, 60]
 optimizer = Adam
+activation = relu
 #early_stop=False
 #log_interval = 20
 #ckpt_save_interval = 5
