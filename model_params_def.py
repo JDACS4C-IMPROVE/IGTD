@@ -110,6 +110,11 @@ train_params = [
      "default": [],
      "help": "pool."
      },
+    {"name": "dense",
+     "nargs": "+",
+     "default": [],
+     "help": "dense."
+     },
     {"name": "optimizer",
      "type": str,
      "default": "Adam",
