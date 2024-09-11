@@ -85,7 +85,7 @@ def run(params):
             output_dir=params["output_dir"]
         )
 
-    return test_scores
+    return True
 
 
 def main():
@@ -94,7 +94,7 @@ def main():
         pathToModelDir=filepath,
         default_config="IGTD_params.txt",
         additional_definitions=infer_params)
-    test_scores = run(params)
+    if_run = run(params)
     print("\nFinished model inference.")
 
 
