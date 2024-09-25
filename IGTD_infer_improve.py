@@ -71,7 +71,8 @@ def run(params):
         y_pred=testPredResult,
         stage="test",
         y_col_name=params["y_col_name"],
-        output_dir=params["output_dir"])
+        output_dir=params["output_dir"],
+        input_dir=params["input_data_dir"])
 
     # ------------------------------------------------------
     # [Req] Compute performance scores
