@@ -1,8 +1,8 @@
 # IGTD
 
-This repository demonstrates how to use the [IMPROVE library v0.1.0-alpha](https://jdacs4c-improve.github.io/docs/v0.1.0-alpha/) for building a drug response prediction (DRP) model using IGTD, and provides examples with the benchmark [cross-study analysis (CSA) dataset](https://web.cels.anl.gov/projects/IMPROVE_FTP/candle/public/improve/benchmarks/single_drug_drp/benchmark-data-pilot1/csa_data/).
+This repository demonstrates how to use the [IMPROVE library v0.1.0-2024-09-27](https://jdacs4c-improve.github.io/docs/v0.1.0-alpha/) for building a drug response prediction (DRP) model using IGTD, and provides examples with the benchmark [cross-study analysis (CSA) dataset](https://web.cels.anl.gov/projects/IMPROVE_FTP/candle/public/improve/benchmarks/single_drug_drp/benchmark-data-pilot1/csa_data/).
 
-This version, tagged as `v0.1.0-alpha`, introduces a new API which is designed to encourage broader adoption of IMPROVE and its curated models by the research community.
+This version, tagged as `v0.1.0-2024-09-27`, introduces a new API which is designed to encourage broader adoption of IMPROVE and its curated models by the research community.
 
 
 
@@ -15,7 +15,7 @@ ML framework:
 + [TensorFlow](https://www.tensorflow.org/) -- deep learning framework for building the prediction model
 
 IMPROVE dependencies:
-+ [IMPROVE v0.1.0-alpha](https://jdacs4c-improve.github.io/docs/v0.1.0-alpha/)
++ [IMPROVE v0.1.0-2024-09-27](https://jdacs4c-improve.github.io/docs/v0.1.0-alpha/)
 
 
 
@@ -71,9 +71,9 @@ csa_data/raw_data/
 
 ### 1. Clone the model repository
 ```bash
-git clone git@github.com:JDACS4C-IMPROVE/IGTD.git
+git clone https://github.com/JDACS4C-IMPROVE/IGTD
 cd IGTD
-git checkout develop
+git checkout v0.1.0-2024-09-27
 ```
 
 
