@@ -46,7 +46,12 @@ preprocess_params = [
     {"name": "inference_split_file",
      "type": str,
      "help": "File name of response sample indices in the inference set.",
+     },
+    {"name": "inference_data_name",
+     "type": str,
+     "help": "Name of the data for model inference.",
      }
+
 ]
 train_params = [
     {'name': 'rlr_factor',

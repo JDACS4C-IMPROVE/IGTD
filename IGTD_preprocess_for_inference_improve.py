@@ -57,7 +57,7 @@ def run(params):
     norm_ge, min_v, max_v = min_max_transform(ge.values, preprocessor_params['gene_expression']['min_max_param'][0], 
                                               preprocessor_params['gene_expression']['min_max_param'][1])
     norm_ge = pd.DataFrame(norm_ge, columns=ge.columns, index=ge.index)
-    result_dir = os.path.join(processed_outdir, 'Image_Data', 'Cancer')
+    result_dir = os.path.join(processed_outdir, params['inference_data_name'], 'Image_Data', 'Cancer')
     os.makedirs(name=result_dir, exist_ok=True)
 
     data, samples = generate_image_data(data=norm_ge, index=preprocessor_params['gene_expression']['feature_swap_index'], 
@@ -77,7 +77,7 @@ def run(params):
     norm_md, min_v, max_v = min_max_transform(md.values, preprocessor_params['drug_descriptor']['min_max_param'][0], 
                                               preprocessor_params['drug_descriptor']['min_max_param'][1])
     norm_md = pd.DataFrame(norm_md, columns=md.columns, index=md.index)
-    result_dir = os.path.join(processed_outdir, 'Image_Data', 'Drug')
+    result_dir = os.path.join(processed_outdir, params['inference_data_name'], 'Image_Data', 'Drug')
     os.makedirs(name=result_dir, exist_ok=True)
 
     data, samples = generate_image_data(data=norm_md, index=preprocessor_params['drug_descriptor']['feature_swap_index'], 
@@ -92,12 +92,12 @@ def run(params):
     cp.dump(samples, output)
     output.close()
  
-    cancer_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Cancer', 'inference_data_results.pkl')
-    drug_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Drug', 'inference_data_results.pkl')
+    cancer_image_data_filepath = os.path.join(processed_outdir, params['inference_data_name'], 'Image_Data', 'Cancer', 'inference_data_results.pkl')
+    drug_image_data_filepath = os.path.join(processed_outdir, params['inference_data_name'], 'Image_Data', 'Drug', 'inference_data_results.pkl')
     data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage="inference")
     data = load_data(rr_inference.dfs["response.tsv"], cancer_image_data_filepath, drug_image_data_filepath, 
                      params['canc_col_name'], params['drug_col_name'], params['y_col_name'])
-    output = open(os.path.join(processed_outdir, data_fname), 'wb')
+    output = open(os.path.join(processed_outdir, params['inference_data_name'], data_fname), 'wb')
     cp.dump(data, output, protocol=4)
     output.close()
 
@@ -105,7 +105,7 @@ def run(params):
     res_to_save = pd.DataFrame({params['canc_col_name']: [i.split('|')[0] for i in data['sample']],
                                 params['drug_col_name']: [i.split('|')[1] for i in data['sample']],
                                 params['y_col_name']: data['label']}, index=None)
-    frm.save_stage_ydf(ydf=res_to_save, stage="inference", output_dir=params["output_dir"])
+    frm.save_stage_ydf(ydf=res_to_save, stage="inference", output_dir=os.path.join(processed_outdir, params['inference_data_name']))
 
     return processed_outdir
 
