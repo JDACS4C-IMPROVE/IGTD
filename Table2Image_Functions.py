@@ -9,6 +9,7 @@ import shutil
 import time
 import _pickle as cp
 import sys
+# import ipdb
 
 
 
@@ -45,8 +46,8 @@ def get_full_data(res, ccl, drug, cancer_col_name, drug_col_name, res_col_name=N
 
 
 
-def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath, 
-              drug_id_mapping_filepath, cancer_col_name, drug_col_name, res_col_name):
+def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_col_name, drug_col_name, 
+              res_col_name, cancer_id_mapping_filepath=None, drug_id_mapping_filepath=None):
     '''
     This function generates data of matched cancer, drug, and response.
 
@@ -66,12 +67,20 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
     matched_data: a dictionary of 'data', 'label', and 'sample' of cancer, drug, and response matched data.
     '''
     
-    ccl_map = pd.read_csv(cancer_id_mapping_filepath, sep='\t', engine='c',
-                          na_values=['na', '-', ''], header=0, index_col=None).drop_duplicates()
-    ccl_map.index = ccl_map.iloc[:, 0]
-    drug_map = pd.read_csv(drug_id_mapping_filepath, sep='\t', engine='c',
-                           na_values=['na', '-', ''], header=0, index_col=None).drop_duplicates()
-    drug_map.index = drug_map.iloc[:, 0]
+#    ipdb.set_trace()
+
+    if cancer_id_mapping_filepath is not None:
+        ccl_map = pd.read_csv(cancer_id_mapping_filepath, sep='\t', engine='c', na_values=['na', '-', ''], 
+                              header=0, index_col=None).drop_duplicates()
+        ccl_map.index = ccl_map.iloc[:, 0]
+    else:
+        ccl_map = None
+    if drug_id_mapping_filepath is not None:
+        drug_map = pd.read_csv(drug_id_mapping_filepath, sep='\t', engine='c', na_values=['na', '-', ''], 
+                               header=0, index_col=None).drop_duplicates()
+        drug_map.index = drug_map.iloc[:, 0]
+    else:
+        drug_map = None
 
     pkl_file = open(cancer_image_data_filepath, 'rb')
     ccl_norm_d = cp.load(pkl_file)
@@ -93,17 +102,25 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
 
     data = {}
 
+#    ipdb.set_trace()
+
     # Load gene expression data
     data['ge'] = {}
     data['ge']['sample'] = np.unique(res.loc[:, cancer_col_name])
-    id = ID_mapping(ccl_samples, ccl_map.loc[data['ge']['sample'], 'Unique_CancID'])
+    if ccl_map is not None:
+        id = ID_mapping(ccl_samples, ccl_map.loc[data['ge']['sample'], 'Unique_CancID'])
+    else:
+        id = ID_mapping(ccl_samples, data['ge']['sample'])
     data['ge']['data'] = np.empty((len(id), ccl_data.shape[1], ccl_data.shape[2], 1))
     data['ge']['data'][:, :, :, 0] = ccl_data[id, :, :]
 
     # Load drug data
     data['md'] = {}
     data['md']['sample'] = np.unique(res.loc[:, drug_col_name])
-    id = ID_mapping(drug_samples, drug_map.loc[data['md']['sample'], 'Unique_DrugID'])
+    if drug_map is not None:
+        id = ID_mapping(drug_samples, drug_map.loc[data['md']['sample'], 'Unique_DrugID'])
+    else:
+        id = ID_mapping(drug_samples, data['md']['sample'])
     data['md']['data'] = np.empty((len(id), drug_data.shape[1], drug_data.shape[2], 1))
     data['md']['data'][:, :, :, 0] = drug_data[id, :, :]
 
@@ -112,6 +129,8 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
 
     # Match data
     matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
+
+#    ipdb.set_trace()
 
     return matched_data
 
@@ -147,27 +166,62 @@ def generate_unique_id_mapping(ge):
 
 
 
-def min_max_transform(data):
+def min_max_transform(data, min_v=None, max_v=None):
     '''
     This function does a linear transformation of each feature, so that the minimum and maximum values of a
     feature are 0 and 1, respectively.
 
     Input:
     data: an input data array with a size of [n_sample, n_feature]
+    min_v: the minimum values of features for normalization. If None, the minimum values will be calcualted based on input data.
+    max_v: the maximum values of features for normalization. If None, the maximum values will be calcualted based on input data.
     Return:
     norm_data: the data array after transformation
+    min_v: the minimum values of features used for normalization.
+    max_v: the maximum values of features used for normalization.
     '''
 
     norm_data = np.empty(data.shape)
     norm_data.fill(np.nan)
-    for i in range(data.shape[1]):
-        v = data[:, i].copy()
-        if np.max(v) == np.min(v):
-            norm_data[:, i] = 0
-        else:
-            v = (v - np.min(v)) / (np.max(v) - np.min(v))
-            norm_data[:, i] = v
-    return norm_data
+
+    if min_v is None and max_v is None:
+        
+#        ipdb.set_trace()
+
+        min_v = []
+        max_v = []
+        for i in range(data.shape[1]):
+            v = data[:, i].copy()
+
+            if np.max(v) == np.min(v):
+                norm_data[:, i] = 0
+            else:
+                v = (v - np.min(v)) / (np.max(v) - np.min(v))
+                norm_data[:, i] = v
+            min_v.append(np.min(data[:, i]))
+            max_v.append(np.max(data[:, i]))
+
+    elif min_v is not None and max_v is not None:
+        
+#        ipdb.set_trace()
+        
+        for i in range(data.shape[1]):
+            v = data[:, i].copy()
+            if min_v[i] == max_v[i]:
+                norm_data[:, i] = 0
+                id = np.where(v > max_v[i])[0]
+                norm_data[id, i] = 1
+            else:
+                v = (v - min_v[i]) / (max_v[i] - min_v[i])
+                id = np.where(v > 1)[0]
+                v[id] = 1
+                id = np.where(v < 0)[0]
+                v[id] = 0
+                norm_data[:, i] = v
+    
+#    ipdb.set_trace()
+
+    return norm_data, min_v, max_v
 
 
 
@@ -703,21 +757,28 @@ def generate_image_data(data, index, num_row, num_column, coord, image_folder=No
     samples: the names of indices of the samples
     '''
 
+
+
     if isinstance(data, pd.DataFrame):
         samples = data.index.map(np.str)
         data = data.values
     else:
         samples = [str(i) for i in range(data.shape[0])]
 
-    if os.path.exists(image_folder):
-        shutil.rmtree(image_folder)
-    os.mkdir(image_folder)
+#    ipdb.set_trace()
+
+    # if os.path.exists(image_folder):
+    #     shutil.rmtree(image_folder)
+    # os.mkdir(image_folder)
+    os.makedirs(name=image_folder, exist_ok=True)
 
     data_2 = data.copy()
     data_2 = data_2[:, index]
     max_v = np.max(data_2)
     min_v = np.min(data_2)
     data_2 = 255 - (data_2 - min_v) / (max_v - min_v) * 255 # So that black means high value
+
+#    ipdb.set_trace()
 
     image_data = np.empty((num_row, num_column, data_2.shape[0]))
     image_data.fill(np.nan)
@@ -736,6 +797,8 @@ def generate_image_data(data, index, num_row, num_column, coord, image_folder=No
 
             pd.DataFrame(image_data[:, :, i], index=None, columns=None).to_csv(image_folder + '/' + file_name + '_'
                 + samples[i] + '_data.txt', header=None, index=None, sep='\t', line_terminator='\r\n')
+
+#    ipdb.set_trace()
 
     return image_data, samples
 
@@ -841,7 +904,12 @@ def table_to_image(norm_d, scale, fea_dist_method, image_dist_method, save_image
     output = open(normDir + '/Results_Auxiliary.pkl', 'wb')
     cp.dump(ranking_feature, output)
     cp.dump(ranking_image, output)
+    cp.dump(index[min_id, :], output)
     cp.dump(coordinate, output)
     cp.dump(err, output)
     cp.dump(time, output)
     output.close()
+
+    return index[min_id, :], coordinate
+
+

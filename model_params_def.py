@@ -13,12 +13,12 @@ preprocess_params = [
     },
     {"name": "max_step",
      "type": int,
-     "default": 50000, # 50000
+     "default": 500, # 50000
      "help": "The maximum number of iterations to run the IGTD algorithm, if it does not converge.",
     },
     {"name": "val_step",
      "type": int,
-     "default": 500, # 500
+     "default": 5, # 500
      "help": "The number of iterations for determining algorithm convergence. If the error reduction rate.",
      },
     {"name": "fea_dist_method",
@@ -38,6 +38,14 @@ preprocess_params = [
      "choice": ["abs", "squared"],
      "default": "abs",
      "help": "Function for evaluating the difference between feature distance ranking and pixel distance ranking.",
+     },
+    {"name": "preprocessor_param_file",
+     "type": str,
+     "help": "File name to save parameters used in the preprocessing of data.",
+     },
+    {"name": "inference_split_file",
+     "type": str,
+     "help": "File name of response sample indices in the inference set.",
      }
 ]
 train_params = [

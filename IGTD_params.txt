@@ -6,6 +6,8 @@ data_format = .pkl
 train_split_file = CCLE_split_0_train.txt
 val_split_file = CCLE_split_0_val.txt
 test_split_file = CCLE_split_0_test.txt
+inference_split_file = CCLE_split_0_test.txt
+preprocessor_param_file = preprocessor_params.pkl
 
 [Train]
 model_file_name = model

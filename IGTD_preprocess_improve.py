@@ -7,7 +7,7 @@ from Table2Image_Functions import min_max_transform, table_to_image, select_feat
     generate_unique_id_mapping, load_data
 #from improve import framework as frm
 #from improve import drug_resp_pred as drp
-import multiprocessing
+#import multiprocessing
 
 from improvelib.applications.drug_response_prediction.config import DRPPreprocessConfig
 import improvelib.utils as frm
@@ -45,12 +45,14 @@ def run(params):
     df_response = pd.concat((rr_train.dfs["response.tsv"], rr_val.dfs["response.tsv"], rr_test.dfs["response.tsv"]),
                             axis=0)
 
-    if not os.path.exists(processed_outdir):
-        os.makedirs(processed_outdir, exist_ok=True)
+    ################# temporary code ###############
+    ge = ge.iloc[:, :960]
+    md = md.iloc[:, :960]
+    ############################################
 
-    # ################# temporary code ###############
-    # ge = ge.iloc[:, :3000]
-    # ############################################
+    preprocessor_params = {}
+    preprocessor_params['gene_expression'] = {}
+    preprocessor_params['drug_descriptor'] = {}
 
     ge = ge.loc[np.unique(df_response.improve_sample_id), :]
     id = np.where(np.std(ge, axis=0) > 0)[0]
@@ -82,18 +84,22 @@ def run(params):
     save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
     fid = select_features_by_variation(data, variation_measure='var', threshold=None, num=num)
     data = data.iloc[:, fid]
-    norm_data = min_max_transform(data.values)
+    norm_data, min_v, max_v = min_max_transform(data.values)
     norm_data = pd.DataFrame(norm_data, columns=data.columns, index=data.index)
 
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Cancer')
     os.makedirs(name=result_dir, exist_ok=True)
-    # table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
-    #                params['image_dist_method'], save_image_size,
-    #                params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
-    proc1 = multiprocessing.Process(target=table_to_image, args=(norm_data, [params['num_row'], params['num_col']],
-        params['fea_dist_method'], params['image_dist_method'], save_image_size, params['max_step'],
-        params['val_step'], result_dir, params['error'], 0, 0.000001))
-    proc1.start()
+    index, coordinate = table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+                   params['image_dist_method'], save_image_size,
+                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+
+    preprocessor_params['gene_expression']['input_data'] = ge_unique_data
+    preprocessor_params['gene_expression']['num_row'] = params['num_row']
+    preprocessor_params['gene_expression']['num_col'] = params['num_col']
+    preprocessor_params['gene_expression']['feature_id'] = fid
+    preprocessor_params['gene_expression']['min_max_param'] = (min_v, max_v)
+    preprocessor_params['gene_expression']['feature_swap_index'] = index
+    preprocessor_params['gene_expression']['image_coordinate'] = coordinate
 
     # Import the example data and linearly scale each feature so that its minimum and maximum values are 0 and 1, respectively.
     data = pd.read_csv(os.path.join(processed_outdir, 'Unique_DrugID_Data.txt'), low_memory=False, sep='\t', engine='c',
@@ -105,20 +111,26 @@ def run(params):
     save_image_size = 1 + 16 / 10000 * num  # Size of pictures (in inches) saved during the execution of IGTD algorithm.
     fid = select_features_by_variation(data, variation_measure='var', threshold=None, num=num)
     data = data.iloc[:, fid]
-    norm_data = min_max_transform(data.values)
+    norm_data, min_v, max_v = min_max_transform(data.values)
     norm_data = pd.DataFrame(norm_data, columns=data.columns, index=data.index)
 
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Drug')
     os.makedirs(name=result_dir, exist_ok=True)
-    # table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
-    #                params['image_dist_method'], save_image_size,
-    #                params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
-    proc2 = multiprocessing.Process(target=table_to_image, args=(norm_data, [params['num_row'], params['num_col']],
-        params['fea_dist_method'], params['image_dist_method'], save_image_size, params['max_step'],
-        params['val_step'], result_dir, params['error'], 0, 0.000001))
-    proc2.start()
-    proc1.join()
-    proc2.join()
+    index, coordinate = table_to_image(norm_data, [params['num_row'], params['num_col']], params['fea_dist_method'],
+                   params['image_dist_method'], save_image_size,
+                   params['max_step'], params['val_step'], result_dir, params['error'], min_gain=0.000001)
+
+    preprocessor_params['drug_descriptor']['input_data'] = md_unique_data
+    preprocessor_params['drug_descriptor']['num_row'] = params['num_row']
+    preprocessor_params['drug_descriptor']['num_col'] = params['num_col']
+    preprocessor_params['drug_descriptor']['feature_id'] = fid
+    preprocessor_params['drug_descriptor']['min_max_param'] = (min_v, max_v)
+    preprocessor_params['drug_descriptor']['feature_swap_index'] = index
+    preprocessor_params['drug_descriptor']['image_coordinate'] = coordinate
+
+    output = open(os.path.join(processed_outdir, params['preprocessor_param_file']), 'wb')
+    cp.dump(preprocessor_params, output, protocol=4)
+    output.close()
 
     cancer_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Cancer', 'Results.pkl')
     drug_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Drug', 'Results.pkl')
@@ -129,8 +141,9 @@ def run(params):
               "test": rr_test.dfs["response.tsv"]}
     for stage, res in stages.items():
         data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage=stage)
-        data = load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_id_mapping_filepath,
-                         drug_id_mapping_filepath, params['canc_col_name'], params['drug_col_name'], params['y_col_name'])
+        data = load_data(res, cancer_image_data_filepath, drug_image_data_filepath, params['canc_col_name'], 
+                         params['drug_col_name'], params['y_col_name'], cancer_id_mapping_filepath,
+                         drug_id_mapping_filepath)
         output = open(os.path.join(processed_outdir, data_fname), 'wb')
         cp.dump(data, output, protocol=4)
         output.close()
@@ -159,3 +172,7 @@ def main():
 # [Req]
 if __name__ == "__main__":
     main()
+
+
+
+
