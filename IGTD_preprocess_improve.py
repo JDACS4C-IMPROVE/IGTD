@@ -45,11 +45,6 @@ def run(params):
     df_response = pd.concat((rr_train.dfs["response.tsv"], rr_val.dfs["response.tsv"], rr_test.dfs["response.tsv"]),
                             axis=0)
 
-    ################# temporary code ###############
-    ge = ge.iloc[:, :960]
-    md = md.iloc[:, :960]
-    ############################################
-
     preprocessor_params = {}
     preprocessor_params['gene_expression'] = {}
     preprocessor_params['drug_descriptor'] = {}

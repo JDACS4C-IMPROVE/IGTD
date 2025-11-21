@@ -13,12 +13,12 @@ preprocess_params = [
     },
     {"name": "max_step",
      "type": int,
-     "default": 500, # 50000
+     "default": 50000, # 50000
      "help": "The maximum number of iterations to run the IGTD algorithm, if it does not converge.",
     },
     {"name": "val_step",
      "type": int,
-     "default": 5, # 500
+     "default": 500, # 500
      "help": "The number of iterations for determining algorithm convergence. If the error reduction rate.",
      },
     {"name": "fea_dist_method",

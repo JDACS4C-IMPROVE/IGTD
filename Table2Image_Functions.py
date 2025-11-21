@@ -66,8 +66,6 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
     --------
     matched_data: a dictionary of 'data', 'label', and 'sample' of cancer, drug, and response matched data.
     '''
-    
-#    ipdb.set_trace()
 
     if cancer_id_mapping_filepath is not None:
         ccl_map = pd.read_csv(cancer_id_mapping_filepath, sep='\t', engine='c', na_values=['na', '-', ''], 
@@ -102,8 +100,6 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
 
     data = {}
 
-#    ipdb.set_trace()
-
     # Load gene expression data
     data['ge'] = {}
     data['ge']['sample'] = np.unique(res.loc[:, cancer_col_name])
@@ -129,8 +125,6 @@ def load_data(res, cancer_image_data_filepath, drug_image_data_filepath, cancer_
 
     # Match data
     matched_data = get_full_data(data['res'], data['ge'], data['md'], cancer_col_name, drug_col_name, res_col_name)
-
-#    ipdb.set_trace()
 
     return matched_data
 
@@ -185,9 +179,6 @@ def min_max_transform(data, min_v=None, max_v=None):
     norm_data.fill(np.nan)
 
     if min_v is None and max_v is None:
-        
-#        ipdb.set_trace()
-
         min_v = []
         max_v = []
         for i in range(data.shape[1]):
@@ -202,9 +193,6 @@ def min_max_transform(data, min_v=None, max_v=None):
             max_v.append(np.max(data[:, i]))
 
     elif min_v is not None and max_v is not None:
-        
-#        ipdb.set_trace()
-        
         for i in range(data.shape[1]):
             v = data[:, i].copy()
             if min_v[i] == max_v[i]:
@@ -218,8 +206,6 @@ def min_max_transform(data, min_v=None, max_v=None):
                 id = np.where(v < 0)[0]
                 v[id] = 0
                 norm_data[:, i] = v
-    
-#    ipdb.set_trace()
 
     return norm_data, min_v, max_v
 
@@ -765,8 +751,6 @@ def generate_image_data(data, index, num_row, num_column, coord, image_folder=No
     else:
         samples = [str(i) for i in range(data.shape[0])]
 
-#    ipdb.set_trace()
-
     # if os.path.exists(image_folder):
     #     shutil.rmtree(image_folder)
     # os.mkdir(image_folder)
@@ -777,8 +761,6 @@ def generate_image_data(data, index, num_row, num_column, coord, image_folder=No
     max_v = np.max(data_2)
     min_v = np.min(data_2)
     data_2 = 255 - (data_2 - min_v) / (max_v - min_v) * 255 # So that black means high value
-
-#    ipdb.set_trace()
 
     image_data = np.empty((num_row, num_column, data_2.shape[0]))
     image_data.fill(np.nan)
@@ -797,8 +779,6 @@ def generate_image_data(data, index, num_row, num_column, coord, image_folder=No
 
             pd.DataFrame(image_data[:, :, i], index=None, columns=None).to_csv(image_folder + '/' + file_name + '_'
                 + samples[i] + '_data.txt', header=None, index=None, sep='\t', line_terminator='\r\n')
-
-#    ipdb.set_trace()
 
     return image_data, samples
 

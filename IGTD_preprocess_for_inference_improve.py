@@ -24,8 +24,6 @@ filepath = Path(__file__).resolve().parent
 
 def run(params):
 
-#    ipdb.set_trace()
-
     # [Req] Build paths and create output dir
     processed_outdir = params["output_dir"]
 
@@ -54,8 +52,6 @@ def run(params):
     preprocessor_params = cp.load(pkl_file)
     pkl_file.close()
 
-#    ipdb.set_trace()
-
     print("\nGenerate gene expression image data...")
     ge = ge.loc[:, preprocessor_params['gene_expression']['input_data'].columns].iloc[:, preprocessor_params['gene_expression']['feature_id']]
     norm_ge, min_v, max_v = min_max_transform(ge.values, preprocessor_params['gene_expression']['min_max_param'][0], 
@@ -63,8 +59,6 @@ def run(params):
     norm_ge = pd.DataFrame(norm_ge, columns=ge.columns, index=ge.index)
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Cancer')
     os.makedirs(name=result_dir, exist_ok=True)
-
-#    ipdb.set_trace()
 
     data, samples = generate_image_data(data=norm_ge, index=preprocessor_params['gene_expression']['feature_swap_index'], 
                                         num_row=preprocessor_params['gene_expression']['num_row'], 
@@ -85,8 +79,6 @@ def run(params):
     norm_md = pd.DataFrame(norm_md, columns=md.columns, index=md.index)
     result_dir = os.path.join(processed_outdir, 'Image_Data', 'Drug')
     os.makedirs(name=result_dir, exist_ok=True)
-
-#    ipdb.set_trace()
 
     data, samples = generate_image_data(data=norm_md, index=preprocessor_params['drug_descriptor']['feature_swap_index'], 
                                         num_row=preprocessor_params['drug_descriptor']['num_row'], 
