@@ -41,9 +41,10 @@ def run(params):
 
     rr_train = drp.DrugResponseLoader(params, split_file=params["train_split_file"], verbose=True)
     rr_val = drp.DrugResponseLoader(params, split_file=params["val_split_file"], verbose=True)
-    rr_test = drp.DrugResponseLoader(params, split_file=params["test_split_file"], verbose=True)
-    df_response = pd.concat((rr_train.dfs["response.tsv"], rr_val.dfs["response.tsv"], rr_test.dfs["response.tsv"]),
-                            axis=0)
+    # rr_test = drp.DrugResponseLoader(params, split_file=params["test_split_file"], verbose=True)
+    # df_response = pd.concat((rr_train.dfs["response.tsv"], rr_val.dfs["response.tsv"], rr_test.dfs["response.tsv"]),
+    #                         axis=0)
+    df_response = pd.concat((rr_train.dfs["response.tsv"], rr_val.dfs["response.tsv"]), axis=0)
 
     preprocessor_params = {}
     preprocessor_params['gene_expression'] = {}
@@ -131,9 +132,10 @@ def run(params):
     drug_image_data_filepath = os.path.join(processed_outdir, 'Image_Data', 'Drug', 'Results.pkl')
     cancer_id_mapping_filepath = os.path.join(processed_outdir, 'CancID_Mapping.txt')
     drug_id_mapping_filepath = os.path.join(processed_outdir, 'DrugID_Mapping.txt')
-    stages = {"train": rr_train.dfs["response.tsv"],
-              "val": rr_val.dfs["response.tsv"],
-              "test": rr_test.dfs["response.tsv"]}
+    # stages = {"train": rr_train.dfs["response.tsv"],
+    #           "val": rr_val.dfs["response.tsv"],
+    #           "test": rr_test.dfs["response.tsv"]}
+    stages = {"train": rr_train.dfs["response.tsv"], "val": rr_val.dfs["response.tsv"]}
     for stage, res in stages.items():
         data_fname = frm.build_ml_data_file_name(data_format=params["data_format"], stage=stage)
         data = load_data(res, cancer_image_data_filepath, drug_image_data_filepath, params['canc_col_name'], 
